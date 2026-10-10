@@ -19,7 +19,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import app.kaiju.inventory.ui.screen.PantallaAgregarProducto
 import app.kaiju.inventory.ui.screen.PantallaListaProducto
+import app.kaiju.inventory.ui.screen.PantallaLogin 
 import app.kaiju.inventory.viewmodel.KaijuViewModel
+import app.kaiju.inventory.viewmodel.LoginViewModel 
 
 @Composable
 fun AppNavHost(viewModel: KaijuViewModel = viewModel()) {
@@ -28,47 +30,66 @@ fun AppNavHost(viewModel: KaijuViewModel = viewModel()) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = backStackEntry?.destination?.route
 
+    val mostrarBottomBar = rutaActual == Rutas.Inventario.ruta || rutaActual == Rutas.Agregar.ruta
+
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = rutaActual == Rutas.Inventario.ruta,
-                    onClick = {
-                        if (rutaActual != Rutas.Inventario.ruta) {
-                            navController.navigate(Rutas.Inventario.ruta) {
-                                launchSingleTop = true
+
+            if (mostrarBottomBar) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = rutaActual == Rutas.Inventario.ruta,
+                        onClick = {
+                            if (rutaActual != Rutas.Inventario.ruta) {
+                                navController.navigate(Rutas.Inventario.ruta) {
+                                    launchSingleTop = true
+                                }
                             }
-                        }
-                    },
-                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Lista de Productos") },
-                    label = { Text("Inventario") }
-                )
-                NavigationBarItem(
-                    selected = rutaActual == Rutas.Agregar.ruta,
-                    onClick = {
-                        if (rutaActual != Rutas.Agregar.ruta) {
-                            navController.navigate(Rutas.Agregar.ruta) {
-                                launchSingleTop = true
+                        },
+                        icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Lista de Productos") },
+                        label = { Text("Inventario") }
+                    )
+                    NavigationBarItem(
+                        selected = rutaActual == Rutas.Agregar.ruta,
+                        onClick = {
+                            if (rutaActual != Rutas.Agregar.ruta) {
+                                navController.navigate(Rutas.Agregar.ruta) {
+                                    launchSingleTop = true
+                                }
                             }
-                        }
-                    },
-                    icon = { Icon(Icons.Filled.Add, contentDescription = "Agregar Producto") },
-                    label = { Text("Agregar") }
-                )
+                        },
+                        icon = { Icon(Icons.Filled.Add, contentDescription = "Agregar Producto") },
+                        label = { Text("Agregar") }
+                    )
+                }
             }
         }
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Rutas.Inventario.ruta,
+            startDestination = Rutas.Login.ruta,
             modifier = Modifier.padding(innerPadding)
         ) {
+            composable(Rutas.Login.ruta) {
+                val loginViewModel: LoginViewModel = viewModel()
+                PantallaLogin(
+                    modeloVista = loginViewModel,
+                    alIngresarExitosamente = {
+                        
+                        navController.navigate(Rutas.Inventario.ruta) {
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
             composable(Rutas.Inventario.ruta) {
                 PantallaListaProducto(
                     viewModel = viewModel,
                     onIrAAgregar = { navController.navigate(Rutas.Agregar.ruta) }
                 )
             }
+
             composable(Rutas.Agregar.ruta) {
                 PantallaAgregarProducto(
                     viewModel = viewModel,
