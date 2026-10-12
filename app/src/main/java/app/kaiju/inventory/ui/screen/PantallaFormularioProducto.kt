@@ -24,7 +24,7 @@ import app.kaiju.inventory.viewmodel.KaijuViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaAgregarProducto(viewModel: KaijuViewModel, onProductoAgregado: () -> Unit) {
+fun PantallaFormularioProducto(viewModel: KaijuViewModel, onProductoAgregado: () -> Unit) {
     val estado by viewModel.estadoFormulario.collectAsState()
 
     Scaffold(

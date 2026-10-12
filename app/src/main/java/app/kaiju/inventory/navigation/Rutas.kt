@@ -1,4 +1,4 @@
-package app.kaiju.inventory.navegation
+package app.kaiju.inventory.navigation
 
 sealed class Rutas(val ruta: String){
     object Login : Rutas("login")

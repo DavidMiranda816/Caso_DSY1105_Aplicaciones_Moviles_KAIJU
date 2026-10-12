@@ -1,4 +1,4 @@
-package app.kaiju.inventory.navegation
+package app.kaiju.inventory.navigation
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -17,8 +17,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import app.kaiju.inventory.ui.screen.PantallaAgregarProducto
-import app.kaiju.inventory.ui.screen.PantallaListaProducto
+import app.kaiju.inventory.ui.screen.PantallaFormularioProducto
+import app.kaiju.inventory.ui.screen.PantallaCatalogo
 import app.kaiju.inventory.ui.screen.PantallaLogin 
 import app.kaiju.inventory.viewmodel.KaijuViewModel
 import app.kaiju.inventory.viewmodel.LoginViewModel 
@@ -84,14 +84,14 @@ fun AppNavHost(viewModel: KaijuViewModel = viewModel()) {
             }
 
             composable(Rutas.Inventario.ruta) {
-                PantallaListaProducto(
+                PantallaCatalogo(
                     viewModel = viewModel,
                     onIrAAgregar = { navController.navigate(Rutas.Agregar.ruta) }
                 )
             }
 
             composable(Rutas.Agregar.ruta) {
-                PantallaAgregarProducto(
+                PantallaFormularioProducto(
                     viewModel = viewModel,
                     onProductoAgregado = {
                         navController.navigate(Rutas.Inventario.ruta) {

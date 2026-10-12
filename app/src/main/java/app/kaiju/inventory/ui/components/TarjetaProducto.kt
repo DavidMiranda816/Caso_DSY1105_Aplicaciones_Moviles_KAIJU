@@ -1,4 +1,4 @@
-package app.kaiju.inventory.ui.component
+package app.kaiju.inventory.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column

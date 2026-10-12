@@ -19,13 +19,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import app.kaiju.inventory.ui.component.TarjetaProducto
+import app.kaiju.inventory.ui.components.TarjetaProducto
 import app.kaiju.inventory.viewmodel.KaijuViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaListaProducto(
+fun PantallaCatalogo(
     viewModel: KaijuViewModel,
     onIrAAgregar: () -> Unit
 ) {
