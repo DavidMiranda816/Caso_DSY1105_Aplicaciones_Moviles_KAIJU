@@ -4,14 +4,17 @@ import androidx.lifecycle.ViewModel
 import app.kaiju.inventory.model.ErroresProducto
 import app.kaiju.inventory.model.FormularioProductoEstado
 import app.kaiju.inventory.model.Producto
+import app.kaiju.inventory.repository.InventarioRepository       
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-class KaijuViewModel : ViewModel() {
+class KaijuViewModel(                                               
+    private val repository: InventarioRepository = InventarioRepository()
+) : ViewModel() {
 
-    private val _productos = MutableStateFlow<List<Producto>>(emptyList())
+    private val _productos = MutableStateFlow(repository.obtenerProductos())   
     val productos: StateFlow<List<Producto>> = _productos.asStateFlow()
 
     private val _estadoFormulario = MutableStateFlow(FormularioProductoEstado())
@@ -92,7 +95,8 @@ class KaijuViewModel : ViewModel() {
                 estadoProducto = estado.estadoProducto
             )
 
-            _productos.update { it + nuevoProducto }
+            repository.agregarProducto(nuevoProducto)               
+            _productos.value = repository.obtenerProductos()        
             _estadoFormulario.value = FormularioProductoEstado()
             onSuccess()
         }
