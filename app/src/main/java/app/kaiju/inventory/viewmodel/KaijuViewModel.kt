@@ -101,4 +101,7 @@ class KaijuViewModel(
             onSuccess()
         }
     }
+    
+    fun estaEnAlerta(producto: Producto): Boolean =
+        producto.stock <= producto.stockMinimo
 }
