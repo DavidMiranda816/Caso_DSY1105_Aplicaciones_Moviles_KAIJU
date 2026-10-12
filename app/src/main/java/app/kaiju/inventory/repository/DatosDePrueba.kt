@@ -1,6 +1,8 @@
 package app.kaiju.inventory.repository
 
 import app.kaiju.inventory.model.Producto
+import app.kaiju.inventory.model.Rol
+import app.kaiju.inventory.model.Usuario
 
 //datos ficticios.
 object DatosDePrueba {
@@ -87,5 +89,12 @@ object DatosDePrueba {
         )
     )
 
-    //Agregar usuarios de prueba con usuarios con rol
+    val usuarios = listOf(
+    Usuario(nombre = "Admin Prueba", correo = "admin@inventario.com",
+        contrasena = "123456", rol = Rol.ADMINISTRADOR),
+    Usuario(nombre = "Vendedor Prueba", correo = "vendedor@inventario.com",
+        contrasena = "123456", rol = Rol.VENDEDOR),
+    Usuario(nombre = "Encargado Prueba", correo = "encargado@inventario.com",
+        contrasena = "123456", rol = Rol.ENCARGADO_INVENTARIO)
+    )
 }

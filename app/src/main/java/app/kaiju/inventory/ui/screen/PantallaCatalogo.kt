@@ -27,6 +27,7 @@ import app.kaiju.inventory.viewmodel.KaijuViewModel
 @Composable
 fun PantallaCatalogo(
     viewModel: KaijuViewModel,
+    puedeAgregar: Boolean,
     onIrAAgregar: () -> Unit
 ) {
     val productos by viewModel.productos.collectAsState()
@@ -34,8 +35,10 @@ fun PantallaCatalogo(
     Scaffold(
         topBar = { TopAppBar(title = { Text("Inventario de Productos") }) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onIrAAgregar) {
-                Text("+", style = MaterialTheme.typography.titleLarge)
+            if (puedeAgregar) {
+                FloatingActionButton(onClick = onIrAAgregar) {
+                    Text("+", style = MaterialTheme.typography.titleLarge)
+                }
             }
         }
     ) { padding ->

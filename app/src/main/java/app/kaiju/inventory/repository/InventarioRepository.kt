@@ -2,6 +2,7 @@ package app.kaiju.inventory.repository
 
 import app.kaiju.inventory.model.Movimiento
 import app.kaiju.inventory.model.Producto
+import app.kaiju.inventory.model.Usuario
 
 class InventarioRepository {
 
@@ -30,4 +31,7 @@ class InventarioRepository {
 
     fun obtenerMovimientos(sku: String): List<Movimiento> =
         movimientos.filter { it.skuProducto == sku }
+
+    fun buscarUsuarioPorCorreo(correo: String): Usuario? =
+        DatosDePrueba.usuarios.find { it.correo == correo }
 }

@@ -10,6 +10,7 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState                   
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -17,24 +18,29 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import app.kaiju.inventory.ui.screen.PantallaFormularioProducto
 import app.kaiju.inventory.ui.screen.PantallaCatalogo
-import app.kaiju.inventory.ui.screen.PantallaLogin 
+import app.kaiju.inventory.ui.screen.PantallaFormularioProducto
+import app.kaiju.inventory.ui.screen.PantallaLogin
 import app.kaiju.inventory.viewmodel.KaijuViewModel
-import app.kaiju.inventory.viewmodel.LoginViewModel 
+import app.kaiju.inventory.viewmodel.LoginViewModel
 
 @Composable
-fun AppNavHost(viewModel: KaijuViewModel = viewModel()) {
+fun AppNavHost(
+    viewModel: KaijuViewModel = viewModel(),
+    loginViewModel: LoginViewModel = viewModel()                  
+) {
     val navController = rememberNavController()
 
     val backStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = backStackEntry?.destination?.route
 
+    val usuarioActivo by loginViewModel.usuarioActivo.collectAsState()         
+    val puedeCrear = loginViewModel.puedeCrearProductos(usuarioActivo)          
+
     val mostrarBottomBar = rutaActual == Rutas.Inventario.ruta || rutaActual == Rutas.Agregar.ruta
 
     Scaffold(
         bottomBar = {
-
             if (mostrarBottomBar) {
                 NavigationBar {
                     NavigationBarItem(
@@ -49,18 +55,20 @@ fun AppNavHost(viewModel: KaijuViewModel = viewModel()) {
                         icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Lista de Productos") },
                         label = { Text("Inventario") }
                     )
-                    NavigationBarItem(
-                        selected = rutaActual == Rutas.Agregar.ruta,
-                        onClick = {
-                            if (rutaActual != Rutas.Agregar.ruta) {
-                                navController.navigate(Rutas.Agregar.ruta) {
-                                    launchSingleTop = true
+                    if (puedeCrear) {                                                 
+                        NavigationBarItem(
+                            selected = rutaActual == Rutas.Agregar.ruta,
+                            onClick = {
+                                if (rutaActual != Rutas.Agregar.ruta) {
+                                    navController.navigate(Rutas.Agregar.ruta) {
+                                        launchSingleTop = true
+                                    }
                                 }
-                            }
-                        },
-                        icon = { Icon(Icons.Filled.Add, contentDescription = "Agregar Producto") },
-                        label = { Text("Agregar") }
-                    )
+                            },
+                            icon = { Icon(Icons.Filled.Add, contentDescription = "Agregar Producto") },
+                            label = { Text("Agregar") }
+                        )
+                    }
                 }
             }
         }
@@ -71,11 +79,9 @@ fun AppNavHost(viewModel: KaijuViewModel = viewModel()) {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(Rutas.Login.ruta) {
-                val loginViewModel: LoginViewModel = viewModel()
-                PantallaLogin(
+                PantallaLogin(                                     
                     modeloVista = loginViewModel,
                     alIngresarExitosamente = {
-                        
                         navController.navigate(Rutas.Inventario.ruta) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
@@ -86,6 +92,7 @@ fun AppNavHost(viewModel: KaijuViewModel = viewModel()) {
             composable(Rutas.Inventario.ruta) {
                 PantallaCatalogo(
                     viewModel = viewModel,
+                    puedeAgregar = puedeCrear,                    
                     onIrAAgregar = { navController.navigate(Rutas.Agregar.ruta) }
                 )
             }
