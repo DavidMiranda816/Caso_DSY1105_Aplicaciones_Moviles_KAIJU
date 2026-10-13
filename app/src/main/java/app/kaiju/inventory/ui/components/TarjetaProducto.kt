@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import app.kaiju.inventory.model.Producto
 
 @Composable
-fun TarjetaProducto(producto: Producto) {
+fun TarjetaProducto(producto: Producto, enAlerta: Boolean = false) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
 
@@ -51,6 +51,10 @@ fun TarjetaProducto(producto: Producto) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+
+            if (enAlerta) {
+                IndicadorStock(stock = producto.stock, stockMinimo = producto.stockMinimo)
+            }
 
             if (producto.descripcion.isNotBlank()) {
                 Spacer(modifier = Modifier.height(4.dp))

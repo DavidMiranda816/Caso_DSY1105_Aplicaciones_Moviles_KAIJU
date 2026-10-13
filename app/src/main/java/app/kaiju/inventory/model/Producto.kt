@@ -8,5 +8,6 @@ data class Producto (
     val precio: Double,
     val categoria: String,
     val stock: Int,
-    val estadoProducto: Boolean
+    val estadoProducto: Boolean,
+    val stockMinimo: Int = 5 //provisional
 )

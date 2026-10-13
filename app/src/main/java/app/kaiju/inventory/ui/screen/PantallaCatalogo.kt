@@ -66,7 +66,7 @@ fun PantallaCatalogo(
                     items = productos,
                     key = { producto -> producto.sku } // Clave única para optimizar el rendimiento del LazyColumn
                 ) { producto ->
-                    TarjetaProducto(producto = producto)
+                    TarjetaProducto(producto = producto, enAlerta = viewModel.estaEnAlerta(producto))
                 }
             }
         }

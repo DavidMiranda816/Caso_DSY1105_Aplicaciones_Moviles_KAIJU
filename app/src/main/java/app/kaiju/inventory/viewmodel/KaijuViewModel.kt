@@ -54,7 +54,11 @@ class KaijuViewModel(
 
     private fun validarFormulario() {
         val estado = _estadoFormulario.value
-        val errorSku = if (estado.sku.isBlank()) "El SKU es obligatorio" else null
+        val errorSku = when {
+            estado.sku.isBlank() -> "El SKU es obligatorio"
+            repository.buscarProducto(estado.sku.trim()) != null -> "El SKU ya existe"
+            else -> null
+        }
         val errorNombre = if (estado.nombreProducto.isBlank()) "El nombre es obligatorio" else null
         val errorPrecio = when {
             estado.precio.isBlank() -> "El precio es obligatorio"
@@ -85,7 +89,7 @@ class KaijuViewModel(
 
         if (estado.esValido) {
             val nuevoProducto = Producto(
-                sku = estado.sku,
+                sku = estado.sku.trim(),
                 nombreProducto = estado.nombreProducto,
                 descripcion = estado.descripcion,
                 marca = estado.marca,

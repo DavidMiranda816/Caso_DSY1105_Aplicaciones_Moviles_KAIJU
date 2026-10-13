@@ -55,7 +55,7 @@ fun PantallaAlertas(viewModel: KaijuViewModel) {
                     items = productosEnAlerta,
                     key = { producto -> producto.sku }
                 ) { producto ->
-                    TarjetaProducto(producto = producto)
+                    TarjetaProducto(producto = producto, enAlerta = viewModel.estaEnAlerta(producto))
                 }
             }
         }
