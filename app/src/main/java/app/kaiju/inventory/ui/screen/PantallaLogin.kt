@@ -13,6 +13,7 @@ import app.kaiju.inventory.viewmodel.LoginViewModel
 @Composable
 fun PantallaLogin(
     modeloVista: LoginViewModel,
+    validarCredenciales: (String, String) -> Boolean,
     alIngresarExitosamente: () -> Unit
 ) {
     val loginEstado by modeloVista.loginEstado.collectAsState()
@@ -71,7 +72,7 @@ fun PantallaLogin(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { modeloVista.iniciarSesion() },
+                onClick = { modeloVista.iniciarSesion(validarCredenciales) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !estaCargando
             ) {

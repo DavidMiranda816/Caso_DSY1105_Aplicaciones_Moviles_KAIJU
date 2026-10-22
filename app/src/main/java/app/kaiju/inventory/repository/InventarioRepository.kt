@@ -1,37 +1,83 @@
 package app.kaiju.inventory.repository
 
+import app.kaiju.inventory.database.MovimientoDao
+import app.kaiju.inventory.database.ProductoDao
 import app.kaiju.inventory.model.Movimiento
 import app.kaiju.inventory.model.Producto
-import app.kaiju.inventory.model.Usuario
+import app.kaiju.inventory.model.TipoMovimiento
+import kotlinx.coroutines.flow.Flow
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-class InventarioRepository {
+class InventarioRepository(
+    private val productoDao: ProductoDao,
+    private val movimientoDao: MovimientoDao,
+    private val transaccion: suspend (suspend () -> String?) -> String? = { bloque -> bloque() }
+) {
+    val productos: Flow<List<Producto>> = productoDao.obtenerActivos()
+    val movimientos: Flow<List<Movimiento>> = movimientoDao.obtenerTodos()
 
-    private val productos = DatosDePrueba.productos.toMutableList()
-    private val movimientos = mutableListOf<Movimiento>()
-    private var siguienteIdMovimiento = 1
+    fun movimientosDe(sku: String): Flow<List<Movimiento>> = movimientoDao.obtenerPorProducto(sku)
 
-    fun obtenerProductos(): List<Producto> = productos.toList()
-
-    fun buscarProducto(sku: String): Producto? =
-        productos.find { it.sku == sku }
-
-    fun agregarProducto(producto: Producto) {
-        productos.add(producto)
+    suspend fun sembrarSiVacio() {
+        if (productoDao.contar() == 0) productoDao.guardarTodos(DatosDePrueba.productos)
     }
 
-    fun actualizarProducto(producto: Producto) {
-        val posicion = productos.indexOfFirst { it.sku == producto.sku }
-        if (posicion != -1) productos[posicion] = producto
+    suspend fun buscar(sku: String): Producto? = productoDao.buscar(sku)
+
+    suspend fun crear(producto: Producto): String? {
+        if (productoDao.buscar(producto.sku)?.estadoProducto == true) return "Ya existe un producto con ese SKU"
+        productoDao.guardar(producto.copy(estadoProducto = true))
+        return null
     }
 
-    fun agregarMovimiento(movimiento: Movimiento) {
-        movimientos.add(movimiento.copy(id = siguienteIdMovimiento))
-        siguienteIdMovimiento = siguienteIdMovimiento + 1
+    suspend fun actualizar(producto: Producto) = productoDao.guardar(producto)
+    suspend fun eliminar(sku: String) = productoDao.darDeBaja(sku) // baja lógica
+
+    suspend fun registrarMovimiento(
+        sku: String, tipo: String, cantidad: Int,
+        motivo: String, observacion: String, usuario: String
+    ): String? = transaccion { aplicarMovimiento(sku, tipo, cantidad, motivo, observacion, usuario) }
+
+    private suspend fun aplicarMovimiento(
+        sku: String, tipo: String, cantidad: Int,
+        motivo: String, observacion: String, usuario: String
+    ): String? {
+
+        if (tipo !in TipoMovimiento.todos) return "Tipo de movimiento no válido"
+
+        if (cantidad < 0 || (cantidad == 0 && tipo != TipoMovimiento.AJUSTE)) {
+            return "La cantidad debe ser mayor a 0"
+        }
+        if (tipo == TipoMovimiento.AJUSTE && motivo.isBlank()) {
+            return "El ajuste requiere un motivo"
+        }
+
+        val producto = productoDao.buscar(sku)?.takeIf { it.estadoProducto }
+            ?: return "Producto no encontrado o inactivo"
+
+        val esSalida = tipo == TipoMovimiento.SALIDA_VENTA || tipo == TipoMovimiento.SALIDA_CONSUMO
+        if (esSalida && cantidad > producto.stock) {
+            return "Stock insuficiente (disponible: ${producto.stock})"
+        }
+
+        val nuevoStock = when (tipo) {
+            TipoMovimiento.ENTRADA -> producto.stock + cantidad
+            TipoMovimiento.SALIDA_VENTA, TipoMovimiento.SALIDA_CONSUMO -> producto.stock - cantidad
+            TipoMovimiento.AJUSTE -> cantidad
+            else -> return "Tipo de movimiento no soportado"
+        }
+
+        movimientoDao.insertar(
+            Movimiento(
+                codigoProducto = sku, tipo = tipo, cantidad = cantidad,
+                motivo = motivo, observacion = observacion, usuario = usuario,
+                fecha = SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(Date())
+            )
+        )
+        productoDao.actualizarStock(sku, nuevoStock)
+
+        return null
     }
-
-    fun obtenerMovimientos(sku: String): List<Movimiento> =
-        movimientos.filter { it.skuProducto == sku }
-
-    fun buscarUsuarioPorCorreo(correo: String): Usuario? =
-        DatosDePrueba.usuarios.find { it.correo == correo }
 }

@@ -1,111 +1,108 @@
 package app.kaiju.inventory.viewmodel
 
 import androidx.lifecycle.ViewModel
-import app.kaiju.inventory.model.ErroresProducto
-import app.kaiju.inventory.model.FormularioProductoEstado
-import app.kaiju.inventory.model.Producto
-import app.kaiju.inventory.repository.InventarioRepository       
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
+import androidx.lifecycle.viewModelScope
+import app.kaiju.inventory.model.*
+import app.kaiju.inventory.repository.InventarioRepository
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 
-class KaijuViewModel(                                               
-    private val repository: InventarioRepository = InventarioRepository()
-) : ViewModel() {
+class KaijuViewModel(private val repository: InventarioRepository) : ViewModel() {
 
-    private val _productos = MutableStateFlow(repository.obtenerProductos())   
-    val productos: StateFlow<List<Producto>> = _productos.asStateFlow()
+    val productos: StateFlow<List<Producto>> =
+        repository.productos.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
     private val _estadoFormulario = MutableStateFlow(FormularioProductoEstado())
     val estadoFormulario: StateFlow<FormularioProductoEstado> = _estadoFormulario.asStateFlow()
 
-    fun actualizarSku(sku: String) {
-        _estadoFormulario.update { it.copy(sku = sku) }
-        validarFormulario()
-    }
+    init { viewModelScope.launch { repository.sembrarSiVacio() } }
 
-    fun actualizarNombre(nombre: String) {
-        _estadoFormulario.update { it.copy(nombreProducto = nombre) }
-        validarFormulario()
-    }
+    fun actualizarSku(v: String) = _estadoFormulario.update { it.copy(sku = v) }
+    fun actualizarNombre(v: String) = _estadoFormulario.update { it.copy(nombreProducto = v) }
+    fun actualizarDescripcion(v: String) = _estadoFormulario.update { it.copy(descripcion = v) }
+    fun actualizarMarca(v: String) = _estadoFormulario.update { it.copy(marca = v) }
+    fun actualizarPrecio(v: String) = _estadoFormulario.update { it.copy(precio = v) }
+    fun actualizarCategoria(v: String) = _estadoFormulario.update { it.copy(categoria = v) }
+    fun actualizarStock(v: String) = _estadoFormulario.update { it.copy(stock = v) }
+    fun actualizarStockMinimo(v: String) = _estadoFormulario.update { it.copy(stockMinimo = v) }
 
-    fun actualizarDescripcion(descripcion: String) {
-        _estadoFormulario.update { it.copy(descripcion = descripcion) }
-    }
+    fun validarFormulario(): Boolean {
+        val e = _estadoFormulario.value
+        val sku = e.sku.trim()
+        val precio = e.precio.toDoubleOrNull()
+        val stock = e.stock.toIntOrNull()
+        val stockMinimo = e.stockMinimo.toIntOrNull()
 
-    fun actualizarMarca(marca: String) {
-        _estadoFormulario.update { it.copy(marca = marca) }
-    }
-
-    fun actualizarPrecio(precio: String) {
-        _estadoFormulario.update { it.copy(precio = precio) }
-        validarFormulario()
-    }
-
-    fun actualizarCategoria(categoria: String) {
-        _estadoFormulario.update { it.copy(categoria = categoria) }
-    }
-
-    fun actualizarStock(stock: String) {
-        _estadoFormulario.update { it.copy(stock = stock) }
-        validarFormulario()
-    }
-
-    private fun validarFormulario() {
-        val estado = _estadoFormulario.value
         val errorSku = when {
-            estado.sku.isBlank() -> "El SKU es obligatorio"
-            repository.buscarProducto(estado.sku.trim()) != null -> "El SKU ya existe"
+            sku.isBlank() -> "El SKU es obligatorio"
+            !e.esEdicion && productos.value.any { it.sku.equals(sku, ignoreCase = true) } -> "Ya existe un producto con ese SKU"
             else -> null
         }
-        val errorNombre = if (estado.nombreProducto.isBlank()) "El nombre es obligatorio" else null
+        val errorNombre = if (e.nombreProducto.isBlank()) "El nombre es obligatorio" else null
         val errorPrecio = when {
-            estado.precio.isBlank() -> "El precio es obligatorio"
-            estado.precio.toDoubleOrNull() == null -> "Ingresa un precio válido"
+            e.precio.isBlank() -> "El precio es obligatorio"
+            precio == null || precio < 0 -> "Ingresa un precio válido"
             else -> null
         }
         val errorStock = when {
-            estado.stock.isBlank() -> "El stock es obligatorio"
-            estado.stock.toIntOrNull() == null -> "Ingresa un número entero"
+            e.stock.isBlank() -> "El stock es obligatorio"
+            stock == null || stock < 0 -> "Ingresa un número entero (0 o más)"
             else -> null
         }
+        val errorStockMinimo = when {
+            e.stockMinimo.isBlank() -> "El stock mínimo es obligatorio"
+            stockMinimo == null || stockMinimo < 0 -> "Ingresa un número entero (0 o más)"
+            else -> null
+        }
+        val valido = listOf(errorSku, errorNombre, errorPrecio, errorStock, errorStockMinimo).all { it == null }
+        _estadoFormulario.update {
+            it.copy(
+                errores = ErroresProducto(errorSku, errorNombre, errorPrecio, errorStock, errorStockMinimo),
+                esValido = valido
+            )
+        }
+        return valido
+    }
 
-        val errores = ErroresProducto(
-            errorSku = errorSku,
-            errorNombre = errorNombre,
-            errorPrecio = errorPrecio,
-            errorStock = errorStock
-        )
+    fun limpiarFormulario() { _estadoFormulario.value = FormularioProductoEstado() }
 
-        val esValido = errorSku == null && errorNombre == null && errorPrecio == null && errorStock == null
-
-        _estadoFormulario.update { it.copy(errores = errores, esValido = esValido) }
+    fun cargarParaEditar(sku: String) {
+        viewModelScope.launch {
+            val p = repository.buscar(sku) ?: return@launch
+            _estadoFormulario.value = FormularioProductoEstado(
+                sku = p.sku, nombreProducto = p.nombreProducto, descripcion = p.descripcion, marca = p.marca,
+                precio = if (p.precio % 1.0 == 0.0) p.precio.toLong().toString() else p.precio.toString(),
+                categoria = p.categoria, stock = p.stock.toString(),
+                stockMinimo = p.stockMinimo.toString(), esEdicion = true
+            )
+        }
     }
 
     fun guardarProducto(onSuccess: () -> Unit) {
-        validarFormulario()
-        val estado = _estadoFormulario.value
-
-        if (estado.esValido) {
-            val nuevoProducto = Producto(
-                sku = estado.sku.trim(),
-                nombreProducto = estado.nombreProducto,
-                descripcion = estado.descripcion,
-                marca = estado.marca,
-                precio = estado.precio.toDoubleOrNull() ?: 0.0,
-                categoria = estado.categoria,
-                stock = estado.stock.toIntOrNull() ?: 0,
-                estadoProducto = estado.estadoProducto
-            )
-
-            repository.agregarProducto(nuevoProducto)               
-            _productos.value = repository.obtenerProductos()        
-            _estadoFormulario.value = FormularioProductoEstado()
-            onSuccess()
+        if (!validarFormulario()) return
+        val e = _estadoFormulario.value
+        val producto = Producto(
+            sku = e.sku.trim(), nombreProducto = e.nombreProducto.trim(),
+            descripcion = e.descripcion.trim(), marca = e.marca.trim(),
+            precio = e.precio.toDouble(), categoria = e.categoria.trim(),
+            stock = e.stock.toInt(), estadoProducto = true,
+            stockMinimo = e.stockMinimo.toInt()
+        )
+        viewModelScope.launch {
+            val error = if (e.esEdicion) { repository.actualizar(producto); null } else repository.crear(producto)
+            if (error == null) {
+                limpiarFormulario()
+                onSuccess()
+            } else {
+                _estadoFormulario.update { it.copy(errores = it.errores.copy(errorSku = error), esValido = false) }
+            }
         }
     }
-    
+
+    fun eliminarProducto(sku: String) { viewModelScope.launch { repository.eliminar(sku) } }
+
+    fun movimientosDeProducto(sku: String): Flow<List<Movimiento>> = repository.movimientosDe(sku)
+
     fun estaEnAlerta(producto: Producto): Boolean =
         producto.stock <= producto.stockMinimo
 }

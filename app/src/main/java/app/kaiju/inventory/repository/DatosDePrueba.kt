@@ -4,97 +4,125 @@ import app.kaiju.inventory.model.Producto
 import app.kaiju.inventory.model.Rol
 import app.kaiju.inventory.model.Usuario
 
-//datos ficticios.
+
 object DatosDePrueba {
 
-    //confirmar categorías en la entrevista.
-    val categorias = listOf(
-        "Polera manga corta",
-        "Polera manga larga",
-        "Polerón polo",
-        "Polerón canguro",
-        "Accesorios"
-    )
-
-    val productos = listOf(
+    val productos: List<Producto> = listOf(
         Producto(
-            sku = "PMC-001", nombreProducto = "Polera Dragón Neón",
-            descripcion = "Polera estampada, talla M, color negro",
-            marca = "Marca propia", precio = 13000.0,
-            categoria = "Polera manga corta",
-            stock = 24, estadoProducto = true, stockMinimo = 6
-        ),
-        Producto(
-            sku = "PMC-002", nombreProducto = "Polera Gato Samurái",
+            sku = "PMC-002",
+            nombreProducto = "Polera Gato Samurái",
             descripcion = "Polera estampada, talla L, color blanco",
-            marca = "Marca propia", precio = 13000.0,
+            marca = "Marca propia",
+            precio = 13000.0,
             categoria = "Polera manga corta",
-            stock = 3, estadoProducto = true, stockMinimo = 6 
+            stock = 3,
+            estadoProducto = true,
+            stockMinimo = 6
         ),
         Producto(
-            sku = "PMC-003", nombreProducto = "Polera Oversize Ola Roja",
-            descripcion = "Polera oversize estampada, talla XL, color negro",
-            marca = "Marca propia", precio = 16000.0,
-            categoria = "Polera manga corta",
-            stock = 12, estadoProducto = true, stockMinimo = 4
-        ),
-        Producto(
-            sku = "PML-001", nombreProducto = "Polera ML Robot Retro",
-            descripcion = "Polera manga larga estampada, talla S, color negro",
-            marca = "Marca propia", precio = 15000.0,
-            categoria = "Polera manga larga",
-            stock = 9, estadoProducto = true, stockMinimo = 4
-        ),
-        Producto(
-            sku = "PML-002", nombreProducto = "Polera ML Tigre Lunar",
+            sku = "PML-002",
+            nombreProducto = "Polera ML Tigre Lunar",
             descripcion = "Polera manga larga estampada, talla M, color negro",
-            marca = "Marca propia", precio = 15000.0,
+            marca = "Marca propia",
+            precio = 15000.0,
             categoria = "Polera manga larga",
-            stock = 2, estadoProducto = true, stockMinimo = 4 
+            stock = 2,
+            estadoProducto = true,
+            stockMinimo = 4
         ),
         Producto(
-            sku = "PPO-001", nombreProducto = "Polerón Polo Oni Sonriente",
-            descripcion = "Polerón polo estampado, talla M, color negro",
-            marca = "Marca propia", precio = 20000.0,
+            sku = "PPO-001",
+            nombreProducto = "Polerón Polo Oni Sonriente",
+            descripcion = "Polerón estampado, talla M, color negro",
+            marca = "Marca propia",
+            precio = 20000.0,
             categoria = "Polerón polo",
-            stock = 5, estadoProducto = true, stockMinimo = 5 
+            stock = 5,
+            estadoProducto = true,
+            stockMinimo = 5
         ),
         Producto(
-            sku = "PCA-001", nombreProducto = "Polerón Canguro Luna Pixel",
-            descripcion = "Polerón canguro estampado, talla L, color negro",
-            marca = "Marca propia", precio = 25000.0,
-            categoria = "Polerón canguro",
-            stock = 14, estadoProducto = true, stockMinimo = 5
-        ),
-        Producto(
-            sku = "PCA-002", nombreProducto = "Polerón Canguro Zorro de Fuego",
+            sku = "PCA-002",
+            nombreProducto = "Polerón Canguro Zorro de Fuego",
             descripcion = "Polerón canguro estampado, talla M, color negro",
-            marca = "Marca propia", precio = 25000.0,
+            marca = "Marca propia",
+            precio = 25000.0,
             categoria = "Polerón canguro",
-            stock = 0, estadoProducto = true, stockMinimo = 3 
+            stock = 0,
+            estadoProducto = true,
+            stockMinimo = 3
         ),
         Producto(
-            sku = "ACC-001", nombreProducto = "Tote bag de prueba",
-            descripcion = "Bolso de tela estampado",
-            marca = "Marca propia", precio = 8000.0,
-            categoria = "Accesorios",
-            stock = 30, estadoProducto = true, stockMinimo = 8
+            sku = "PL-001",
+            nombreProducto = "Polera básica negra",
+            descripcion = "Polera algodón, talla M, color negro",
+            marca = "Marca propia",
+            precio = 9990.0,
+            categoria = "Polera",
+            stock = 25,
+            estadoProducto = true,
+            stockMinimo = 5
         ),
         Producto(
-            sku = "ACC-002", nombreProducto = "Parche bordado de prueba",
-            descripcion = "Parche para ropa",
-            marca = "Marca propia", precio = 3000.0,
-            categoria = "Accesorios",
-            stock = 45, estadoProducto = true, stockMinimo = 10
+            sku = "PL-003",
+            nombreProducto = "Polera oversize blanca",
+            descripcion = "Polera oversize, talla XL, color blanco",
+            marca = "Marca propia",
+            precio = 13990.0,
+            categoria = "Polera",
+            stock = 12,
+            estadoProducto = true,
+            stockMinimo = 4
+        ),
+        Producto(
+            sku = "GO-001",
+            nombreProducto = "Gorro de lana",
+            descripcion = "Gorro tejido, talla única",
+            marca = "Marca propia",
+            precio = 7990.0,
+            categoria = "Gorro",
+            stock = 15,
+            estadoProducto = true,
+            stockMinimo = 5
+        ),
+        Producto(
+            sku = "GO-002",
+            nombreProducto = "Gorra snapback",
+            descripcion = "Gorra plana, talla única",
+            marca = "Marca propia",
+            precio = 9990.0,
+            categoria = "Gorra",
+            stock = 10,
+            estadoProducto = true,
+            stockMinimo = 4
+        ),
+        Producto(
+            sku = "CA-001",
+            nombreProducto = "Calcetines pack x3",
+            descripcion = "Pack de 3 pares, talla única",
+            marca = "Marca propia",
+            precio = 4990.0,
+            categoria = "Calcetín",
+            stock = 20,
+            estadoProducto = true,
+            stockMinimo = 6
+        ),
+        Producto(
+            sku = "JO-001",
+            nombreProducto = "Jogger gris",
+            descripcion = "Pantalón deportivo, talla M, color gris",
+            marca = "Marca propia",
+            precio = 19990.0,
+            categoria = "Pantalón",
+            stock = 6,
+            estadoProducto = true,
+            stockMinimo = 3
         )
     )
 
-    val usuarios = listOf(
-    Usuario(nombre = "Admin Prueba", correo = "admin@inventario.com",
-        contrasena = "123456", rol = Rol.ADMINISTRADOR),
-    Usuario(nombre = "Vendedor Prueba", correo = "vendedor@inventario.com",
-        contrasena = "123456", rol = Rol.VENDEDOR),
-    Usuario(nombre = "Encargado Prueba", correo = "encargado@inventario.com",
-        contrasena = "123456", rol = Rol.ENCARGADO_INVENTARIO)
+    val usuarios: List<Usuario> = listOf(
+        Usuario(correo = "ana@kaiju.cl", contrasena = "1234", nombre = "Ana", rol = Rol.ADMINISTRADOR),
+        Usuario(correo = "beto@kaiju.cl", contrasena = "1234", nombre = "Beto", rol = Rol.VENDEDOR),
+        Usuario(correo = "carla@kaiju.cl", contrasena = "1234", nombre = "Carla", rol = Rol.ENCARGADO_INVENTARIO)
     )
 }

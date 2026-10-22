@@ -1,18 +1,34 @@
 package app.kaiju.inventory.model
 
-enum class TipoMovimiento {
-    ENTRADA,
-    SALIDA_VENTA,
-    SALIDA_CONSUMO,
-    AJUSTE
+import androidx.room.Entity
+import androidx.room.Index
+import androidx.room.PrimaryKey
+
+object TipoMovimiento {
+    const val ENTRADA = "ENTRADA"
+    const val SALIDA_VENTA = "SALIDA_VENTA"
+    const val SALIDA_CONSUMO = "SALIDA_CONSUMO"
+    const val AJUSTE = "AJUSTE"
+
+    val todos = listOf(ENTRADA, SALIDA_VENTA, SALIDA_CONSUMO, AJUSTE)
+
+    fun etiqueta(tipo: String) = when (tipo) {
+        ENTRADA -> "Entrada"
+        SALIDA_VENTA -> "Venta"
+        SALIDA_CONSUMO -> "Consumo"
+        AJUSTE -> "Ajuste"
+        else -> tipo
+    }
 }
 
+@Entity(tableName = "movimientos", indices = [Index("codigoProducto")])
 data class Movimiento(
-    val id: Int = 0,                               
-    val skuProducto: String,
-    val tipo: TipoMovimiento,
+    @PrimaryKey(autoGenerate = true) val id: Int = 0,
+    val codigoProducto: String,
+    val tipo: String,
     val cantidad: Int,
-    val motivo: String = "",                       
-    val fecha: Long = System.currentTimeMillis(),
-    val usuario: String                            
+    val motivo: String,
+    val observacion: String = "",
+    val fecha: String,
+    val usuario: String
 )
