@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import app.kaiju.inventory.navegation.AppNavHost
+import app.kaiju.inventory.navigation.AppNavHost
 import androidx.compose.material3.MaterialTheme
 
 class MainActivity : ComponentActivity() {
