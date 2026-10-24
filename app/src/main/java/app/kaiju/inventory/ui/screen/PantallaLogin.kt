@@ -7,12 +7,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import app.kaiju.inventory.ui.component.CampoTexto
+import app.kaiju.inventory.ui.components.CampoTexto
 import app.kaiju.inventory.viewmodel.LoginViewModel
 
 @Composable
 fun PantallaLogin(
     modeloVista: LoginViewModel,
+    validarCredenciales: (String, String) -> Boolean,
     alIngresarExitosamente: () -> Unit
 ) {
     val loginEstado by modeloVista.loginEstado.collectAsState()
@@ -71,7 +72,7 @@ fun PantallaLogin(
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { modeloVista.iniciarSesion() },
+                onClick = { modeloVista.iniciarSesion(validarCredenciales) },
                 modifier = Modifier.fillMaxWidth(),
                 enabled = !estaCargando
             ) {
