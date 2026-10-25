@@ -29,7 +29,10 @@ import app.kaiju.inventory.viewmodel.KaijuViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaAlertas(viewModel: KaijuViewModel) {
+fun PantallaAlertas(
+    viewModel: KaijuViewModel,
+    onIrADetalle: (String) -> Unit
+) {
     val context = LocalContext.current
     val productos by viewModel.productos.collectAsState()
 
@@ -74,7 +77,7 @@ fun PantallaAlertas(viewModel: KaijuViewModel) {
                         .padding(horizontal = 12.dp)
                 ) {
                     items(items = productosEnAlerta, key = { producto -> producto.sku }) { producto ->
-                        TarjetaAlerta(producto = producto)
+                        TarjetaAlerta(producto = producto, onClick = { onIrADetalle(producto.sku) })
                     }
                 }
             }

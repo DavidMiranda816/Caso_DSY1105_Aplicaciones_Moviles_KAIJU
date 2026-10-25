@@ -9,7 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.view.WindowCompat
 import app.kaiju.inventory.navegation.AppNavHost
-import androidx.compose.material3.MaterialTheme
+import app.kaiju.inventory.ui.theme.KaijuTheme
 
 class MainActivity : ComponentActivity() {
 
@@ -24,7 +24,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            MaterialTheme {
+            KaijuTheme {
                 AppNavHost()
             }
         }

@@ -1,5 +1,6 @@
 package app.kaiju.inventory.ui.screen
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -64,6 +65,16 @@ fun PantallaMovimiento(
             else -> it.stock - cantidadInt
         }
     }
+
+    val colorResultante by animateColorAsState(
+        targetValue = when {
+            stockResultante != null && stockResultante < 0 -> MaterialTheme.colorScheme.error
+            stockResultante != null && producto != null && stockResultante <= producto.stockMinimo ->
+                MaterialTheme.colorScheme.tertiary
+            else -> MaterialTheme.colorScheme.primary
+        },
+        label = "colorResultante"
+    )
 
     LaunchedEffect(tiposPermitidos) {
         viewModel.ajustarTipoPermitido(tiposPermitidos)
@@ -244,8 +255,7 @@ fun PantallaMovimiento(
                         Text(
                             "${producto.stock} → $stockResultante",
                             fontWeight = FontWeight.Bold,
-                            color = if (stockResultante < 0) MaterialTheme.colorScheme.error
-                            else MaterialTheme.colorScheme.primary
+                            color = colorResultante
                         )
                     }
                 }

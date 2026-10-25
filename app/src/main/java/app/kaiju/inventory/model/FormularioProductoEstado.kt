@@ -18,6 +18,7 @@ data class FormularioProductoEstado(
 data class ErroresProducto(
     val errorSku: String? = null,
     val errorNombre: String? = null,
+    val errorCategoria: String? = null,
     val errorPrecio: String? = null,
     val errorStock: String? = null,
     val errorStockMinimo: String? = null

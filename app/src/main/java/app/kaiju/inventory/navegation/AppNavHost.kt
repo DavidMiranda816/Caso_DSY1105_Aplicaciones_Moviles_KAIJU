@@ -44,12 +44,21 @@ fun AppNavHost() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val rutaActual = backStackEntry?.destination?.route
 
-    val items = listOf(
-        ItemNav(Rutas.Inventario.ruta, Rutas.Inventario.ruta, Icons.AutoMirrored.Filled.List, "Inventario"),
-        ItemNav(Rutas.Movimiento.ruta, Rutas.Movimiento.ruta, Icons.Filled.SwapHoriz, "Movimiento"),
-        ItemNav(Rutas.Escaner.ruta, Rutas.Escaner.ruta, Icons.Filled.QrCodeScanner, "Escanear"),
-        ItemNav(Rutas.Alertas.ruta, Rutas.Alertas.ruta, Icons.Filled.Warning, "Alertas")
-    )
+    val usuarioActivo by sesionViewModel.usuarioActivo.collectAsState()
+    val puedeGestionar = sesionViewModel.puedeGestionarProductos(usuarioActivo)
+    val puedeVerAlertas = sesionViewModel.puedeVerAlertas(usuarioActivo)
+    val tiposPermitidos = sesionViewModel.tiposMovimientoPermitidos(usuarioActivo)
+
+    val items = buildList {
+        add(ItemNav(Rutas.Inventario.ruta, Rutas.Inventario.ruta, Icons.AutoMirrored.Filled.List, "Inventario"))
+        if (tiposPermitidos.isNotEmpty()) {
+            add(ItemNav(Rutas.Movimiento.ruta, Rutas.Movimiento.ruta, Icons.Filled.SwapHoriz, "Movimiento"))
+            add(ItemNav(Rutas.Escaner.ruta, Rutas.Escaner.ruta, Icons.Filled.QrCodeScanner, "Escanear"))
+        }
+        if (puedeVerAlertas) {
+            add(ItemNav(Rutas.Alertas.ruta, Rutas.Alertas.ruta, Icons.Filled.Warning, "Alertas"))
+        }
+    }
     val mostrarBottomBar = items.any { it.ruta == rutaActual }
 
     Scaffold(
@@ -91,15 +100,19 @@ fun AppNavHost() {
             }
 
             composable(Rutas.Inventario.ruta) {
-                PantallaListaProducto(
+                PantallaCatalogo(
                     viewModel = viewModel,
+                    usuario = usuarioActivo,
+                    puedeGestionar = puedeGestionar,
                     onIrAAgregar = { navController.navigate(Rutas.Agregar.conSku()) },
                     onIrAEditar = { sku -> navController.navigate(Rutas.Agregar.conSku(sku)) },
                     onIrADetalle = { sku -> navController.navigate(Rutas.DetalleProducto.conSku(sku)) },
                     onCerrarSesion = {
                         sesionViewModel.cerrarSesion()
+                        movimientoViewModel.reiniciar()
+                        viewModel.limpiarFormulario()
                         navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(0) { inclusive = true }
+                            popUpTo(navController.graph.id) { inclusive = true }
                         }
                     }
                 )
@@ -117,6 +130,8 @@ fun AppNavHost() {
                 PantallaDetalleProducto(
                     sku = sku,
                     viewModel = viewModel,
+                    puedeEditar = puedeGestionar,
+                    puedeRegistrarMovimiento = tiposPermitidos.isNotEmpty(),
                     onVolver = { navController.popBackStack() },
                     onIrAEditar = { s -> navController.navigate(Rutas.Agregar.conSku(s)) },
                     onIrAMovimiento = { s ->
@@ -134,7 +149,7 @@ fun AppNavHost() {
                     defaultValue = null
                 })
             ) { entry ->
-                PantallaAgregarProducto(
+                PantallaFormularioProducto(
                     viewModel = viewModel,
                     skuEditar = entry.arguments?.getString(ARG_SKU),
                     onTerminado = {
@@ -146,7 +161,10 @@ fun AppNavHost() {
             }
 
             composable(Rutas.Alertas.ruta) {
-                PantallaAlertas(viewModel = viewModel)
+                PantallaAlertas(
+                    viewModel = viewModel,
+                    onIrADetalle = { sku -> navController.navigate(Rutas.DetalleProducto.conSku(sku)) }
+                )
             }
 
             composable(Rutas.Escaner.ruta) {
@@ -169,11 +187,10 @@ fun AppNavHost() {
             }
 
             composable(Rutas.Movimiento.ruta) {
-                val usuarioActivo by sesionViewModel.usuarioActivo.collectAsState()
                 PantallaMovimiento(
                     viewModel = movimientoViewModel,
                     usuarioActivo = usuarioActivo?.correo ?: "invitado",
-                    tiposPermitidos = sesionViewModel.tiposMovimientoPermitidos(usuarioActivo),
+                    tiposPermitidos = tiposPermitidos,
                     onEscanear = { navController.navigate(Rutas.Escaner.ruta) },
                     onVolver = {
                         movimientoViewModel.reiniciar()

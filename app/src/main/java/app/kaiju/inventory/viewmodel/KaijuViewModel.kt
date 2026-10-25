@@ -12,6 +12,10 @@ class KaijuViewModel(private val repository: InventarioRepository) : ViewModel()
     val productos: StateFlow<List<Producto>> =
         repository.productos.stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
 
+    val categorias: StateFlow<List<String>> =
+        productos.map { lista -> lista.map { it.categoria }.filter { it.isNotBlank() }.distinct().sorted() }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptyList())
+
     private val _estadoFormulario = MutableStateFlow(FormularioProductoEstado())
     val estadoFormulario: StateFlow<FormularioProductoEstado> = _estadoFormulario.asStateFlow()
 
@@ -38,10 +42,15 @@ class KaijuViewModel(private val repository: InventarioRepository) : ViewModel()
             !e.esEdicion && productos.value.any { it.sku.equals(sku, ignoreCase = true) } -> "Ya existe un producto con ese SKU"
             else -> null
         }
-        val errorNombre = if (e.nombreProducto.isBlank()) "El nombre es obligatorio" else null
+        val errorNombre = when {
+            e.nombreProducto.isBlank() -> "El nombre es obligatorio"
+            e.nombreProducto.trim().length < 3 -> "El nombre debe tener al menos 3 caracteres"
+            else -> null
+        }
+        val errorCategoria = if (e.categoria.isBlank()) "Elige una categoría" else null
         val errorPrecio = when {
             e.precio.isBlank() -> "El precio es obligatorio"
-            precio == null || precio < 0 -> "Ingresa un precio válido"
+            precio == null || precio <= 0 -> "El precio debe ser un número mayor que 0"
             else -> null
         }
         val errorStock = when {
@@ -54,10 +63,10 @@ class KaijuViewModel(private val repository: InventarioRepository) : ViewModel()
             stockMinimo == null || stockMinimo < 0 -> "Ingresa un número entero (0 o más)"
             else -> null
         }
-        val valido = listOf(errorSku, errorNombre, errorPrecio, errorStock, errorStockMinimo).all { it == null }
+        val valido = listOf(errorSku, errorNombre, errorCategoria, errorPrecio, errorStock, errorStockMinimo).all { it == null }
         _estadoFormulario.update {
             it.copy(
-                errores = ErroresProducto(errorSku, errorNombre, errorPrecio, errorStock, errorStockMinimo),
+                errores = ErroresProducto(errorSku, errorNombre, errorCategoria, errorPrecio, errorStock, errorStockMinimo),
                 esValido = valido
             )
         }

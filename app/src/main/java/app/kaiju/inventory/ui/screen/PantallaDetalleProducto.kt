@@ -27,6 +27,8 @@ private val formatoPrecio = NumberFormat.getInstance(Locale("es", "CL"))
 fun PantallaDetalleProducto(
     sku: String,
     viewModel: KaijuViewModel,
+    puedeEditar: Boolean,
+    puedeRegistrarMovimiento: Boolean,
     onVolver: () -> Unit,
     onIrAEditar: (String) -> Unit,
     onIrAMovimiento: (String) -> Unit
@@ -45,10 +47,12 @@ fun PantallaDetalleProducto(
                     }
                 },
                 actions = {
-                    if (producto != null) {
+                    if (producto != null && puedeEditar) {
                         IconButton(onClick = { onIrAEditar(producto.sku) }) {
                             Icon(Icons.Filled.Edit, contentDescription = "Editar producto")
                         }
+                    }
+                    if (producto != null && puedeRegistrarMovimiento) {
                         IconButton(onClick = { onIrAMovimiento(producto.sku) }) {
                             Icon(Icons.Filled.SwapHoriz, contentDescription = "Registrar movimiento")
                         }
@@ -115,6 +119,7 @@ fun PantallaDetalleProducto(
                             FilaDetalle("Categoría", producto.categoria.ifBlank { "General" })
                             FilaDetalle("Marca", producto.marca.ifBlank { "N/A" })
                             FilaDetalle("Stock Actual", "${producto.stock} unidades")
+                            FilaDetalle("Stock Mínimo", "${producto.stockMinimo} unidades")
                             FilaDetalle("Estado", if (producto.estadoProducto) "Activo" else "Inactivo")
 
                             if (producto.descripcion.isNotBlank()) {
@@ -145,13 +150,15 @@ fun PantallaDetalleProducto(
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Bold
                         )
-                        Button(
-                            onClick = { onIrAMovimiento(producto.sku) },
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
-                        ) {
-                            Icon(Icons.Filled.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp))
-                            Spacer(Modifier.width(4.dp))
-                            Text("Movimiento", style = MaterialTheme.typography.bodySmall)
+                        if (puedeRegistrarMovimiento) {
+                            Button(
+                                onClick = { onIrAMovimiento(producto.sku) },
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 4.dp)
+                            ) {
+                                Icon(Icons.Filled.SwapHoriz, contentDescription = null, modifier = Modifier.size(16.dp))
+                                Spacer(Modifier.width(4.dp))
+                                Text("Movimiento", style = MaterialTheme.typography.bodySmall)
+                            }
                         }
                     }
                 }
