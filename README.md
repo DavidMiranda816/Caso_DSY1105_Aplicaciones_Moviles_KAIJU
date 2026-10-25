@@ -3,6 +3,7 @@
 # Integrantes
 
 * David Miranda Calderón
+* Daniel Zhain Simms Delgado
 * Rocio Muñoz Rivera
 
 # Caso

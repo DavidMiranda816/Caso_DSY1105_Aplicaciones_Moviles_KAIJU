@@ -10,11 +10,14 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -24,11 +27,27 @@ import app.kaiju.inventory.viewmodel.KaijuViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PantallaAgregarProducto(viewModel: KaijuViewModel, onProductoAgregado: () -> Unit) {
+fun PantallaAgregarProducto(
+    viewModel: KaijuViewModel,
+    skuEditar: String? = null,
+    onTerminado: () -> Unit
+) {
     val estado by viewModel.estadoFormulario.collectAsState()
 
+    LaunchedEffect(skuEditar) {
+        if (skuEditar != null) viewModel.cargarParaEditar(skuEditar) else viewModel.limpiarFormulario()
+    }
+
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Agregar Producto") }) }
+        topBar = {
+            TopAppBar(
+                title = { Text(if (estado.esEdicion) "Editar Producto" else "Agregar Producto") },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary
+                )
+            )
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -42,6 +61,7 @@ fun PantallaAgregarProducto(viewModel: KaijuViewModel, onProductoAgregado: () ->
                 value = estado.sku,
                 onValueChange = viewModel::actualizarSku,
                 label = { Text("SKU") },
+                enabled = !estado.esEdicion,
                 isError = estado.errores.errorSku != null,
                 supportingText = { estado.errores.errorSku?.let { Text(it) } },
                 singleLine = true,
@@ -95,7 +115,8 @@ fun PantallaAgregarProducto(viewModel: KaijuViewModel, onProductoAgregado: () ->
             OutlinedTextField(
                 value = estado.stock,
                 onValueChange = viewModel::actualizarStock,
-                label = { Text("Stock inicial") },
+                label = { Text(if (estado.esEdicion) "Stock (se cambia con movimientos)" else "Stock inicial") },
+                enabled = !estado.esEdicion,
                 isError = estado.errores.errorStock != null,
                 supportingText = { estado.errores.errorStock?.let { Text(it) } },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -104,12 +125,10 @@ fun PantallaAgregarProducto(viewModel: KaijuViewModel, onProductoAgregado: () ->
             )
 
             Button(
-                onClick = {
-                    viewModel.guardarProducto(onSuccess = onProductoAgregado)
-                },
+                onClick = { viewModel.guardarProducto(onSuccess = onTerminado) },
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text("Guardar Producto")
+                Text(if (estado.esEdicion) "Guardar cambios" else "Guardar Producto")
             }
         }
     }
