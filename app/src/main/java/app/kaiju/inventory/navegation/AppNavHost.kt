@@ -96,7 +96,13 @@ fun AppNavHost() {
                     viewModel = viewModel,
                     onIrAAgregar = { navController.navigate(Rutas.Agregar.conSku()) },
                     onIrAEditar = { sku -> navController.navigate(Rutas.Agregar.conSku(sku)) },
-                    onIrADetalle = { sku -> navController.navigate(Rutas.DetalleProducto.conSku(sku)) }
+                    onIrADetalle = { sku -> navController.navigate(Rutas.DetalleProducto.conSku(sku)) },
+                    onCerrarSesion = {
+                        sesionViewModel.cerrarSesion()
+                        navController.navigate(Rutas.Login.ruta) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    }
                 )
             }
 

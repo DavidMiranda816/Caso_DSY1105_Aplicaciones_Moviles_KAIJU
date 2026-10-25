@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -45,7 +46,8 @@ fun PantallaListaProducto(
     viewModel: KaijuViewModel,
     onIrAAgregar: () -> Unit,
     onIrAEditar: (String) -> Unit,
-    onIrADetalle: (String) -> Unit
+    onIrADetalle: (String) -> Unit,
+    onCerrarSesion: () -> Unit
 ) {
     val productos by viewModel.productos.collectAsState()
     var productoAEliminar by remember { mutableStateOf<Producto?>(null) }
@@ -83,7 +85,16 @@ fun PantallaListaProducto(
                 colors = TopAppBarDefaults.topAppBarColors(
                     containerColor = MaterialTheme.colorScheme.primary,
                     titleContentColor = MaterialTheme.colorScheme.onPrimary
-                )
+                ),
+                actions = {
+                    IconButton(onClick = onCerrarSesion) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Logout,
+                            contentDescription = "Cerrar sesión",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
             )
         },
         floatingActionButton = {
@@ -100,7 +111,7 @@ fun PantallaListaProducto(
             OutlinedTextField(
                 value = consultaBusqueda,
                 onValueChange = { consultaBusqueda = it },
-                placeholder = { Text("Buscar por SKU") },
+                placeholder = { Text("Buscar por SKU o nombre...") },
                 leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Buscar") },
                 trailingIcon = {
                     if (consultaBusqueda.isNotBlank()) {
