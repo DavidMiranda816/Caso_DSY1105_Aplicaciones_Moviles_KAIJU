@@ -3,9 +3,9 @@
 Aplicación móvil Android (MVP) para la empresa Kaiju, orientada a la gestión, trazabilidad y control del inventario de sus productos.
 
 ## Integrantes
-- David Miranda Calderón
-- Daniel Zhain Simms Delgado
-- Rocío Muñoz Rivera
+- David Miranda Calderón | correo: dav.mirandac@duocuc.cl
+- Daniel Zhain Simms Delgado | correo: da.simms@duocuc.cl
+- Rocío Muñoz Rivera | correo: roci.munoz@duocuc.cl / rociobetmr04@gmail.com(correo de colaboración).
 
 ## Tecnologías y arquitectura
 - Kotlin + Jetpack Compose (Material 3)
