@@ -57,16 +57,15 @@ class InventarioRepository(
         val producto = productoDao.buscar(sku)?.takeIf { it.estadoProducto }
             ?: return "Producto no encontrado o inactivo"
 
-        val esSalida = tipo == TipoMovimiento.SALIDA
+        val esSalida = TipoMovimiento.esSalida(tipo)
         if (esSalida && cantidad > producto.stock) {
             return "Stock insuficiente (disponible: ${producto.stock})"
         }
 
-        val nuevoStock = when (tipo) {
-            TipoMovimiento.ENTRADA -> producto.stock + cantidad
-            TipoMovimiento.SALIDA -> producto.stock - cantidad
-            TipoMovimiento.AJUSTE -> cantidad
-            else -> return "Tipo de movimiento no soportado"
+        val nuevoStock = when {
+            tipo == TipoMovimiento.ENTRADA -> producto.stock + cantidad
+            esSalida -> producto.stock - cantidad
+            else -> cantidad
         }
 
         movimientoDao.insertar(

@@ -39,7 +39,7 @@ class SesionViewModel : ViewModel() {
     fun tiposMovimientoPermitidos(usuario: Usuario?): List<String> = when (usuario?.rol) {
         Rol.ADMINISTRADOR -> listOf(TipoMovimiento.ENTRADA, TipoMovimiento.AJUSTE)
         Rol.ENCARGADO_INVENTARIO -> TipoMovimiento.todos
-        Rol.VENDEDOR -> listOf(TipoMovimiento.SALIDA)
+        Rol.VENDEDOR -> listOf(TipoMovimiento.SALIDA_VENTA)
         null -> emptyList()
     }
 }

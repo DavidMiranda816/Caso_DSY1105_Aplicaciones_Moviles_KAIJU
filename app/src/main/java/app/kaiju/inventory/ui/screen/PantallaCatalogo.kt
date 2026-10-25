@@ -1,20 +1,25 @@
 package app.kaiju.inventory.ui.screen
 
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -24,6 +29,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -48,19 +54,22 @@ fun PantallaCatalogo(
     puedeGestionar: Boolean,
     onIrAAgregar: () -> Unit,
     onIrAEditar: (String) -> Unit,
+    onIrADetalle: (String) -> Unit,
     onCerrarSesion: () -> Unit
 ) {
     val productos by viewModel.productos.collectAsState()
+    val categorias by viewModel.categorias.collectAsState()
+    var categoriaSeleccionada by rememberSaveable { mutableStateOf<String?>(null) }
     var productoAEliminar by remember { mutableStateOf<Producto?>(null) }
     var textoBusqueda by rememberSaveable { mutableStateOf("") }
 
-    val productosFiltrados = remember(productos, textoBusqueda) {
-        if (textoBusqueda.isBlank()) productos
-        else productos.filter { p ->
-            p.nombreProducto.contains(textoBusqueda, ignoreCase = true) ||
-            p.sku.contains(textoBusqueda, ignoreCase = true) ||
-            p.categoria.contains(textoBusqueda, ignoreCase = true) ||
-            p.marca.contains(textoBusqueda, ignoreCase = true)
+    val productosFiltrados = remember(productos, textoBusqueda, categoriaSeleccionada) {
+        productos.filter { p ->
+            (categoriaSeleccionada == null || p.categoria == categoriaSeleccionada) &&
+            (textoBusqueda.isBlank() ||
+                p.nombreProducto.contains(textoBusqueda, ignoreCase = true) ||
+                p.sku.contains(textoBusqueda, ignoreCase = true) ||
+                p.marca.contains(textoBusqueda, ignoreCase = true))
         }
     }
 
@@ -92,6 +101,11 @@ fun PantallaCatalogo(
                         }
                     }
                 },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = MaterialTheme.colorScheme.onPrimary,
+                    actionIconContentColor = MaterialTheme.colorScheme.onPrimary
+                ),
                 actions = {
                     IconButton(onClick = onCerrarSesion) {
                         Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Cerrar sesión")
@@ -125,10 +139,32 @@ fun PantallaCatalogo(
                     }
                 },
                 singleLine = true,
+                shape = RoundedCornerShape(24.dp),
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp)
             )
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .horizontalScroll(rememberScrollState())
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                FilterChip(
+                    selected = categoriaSeleccionada == null,
+                    onClick = { categoriaSeleccionada = null },
+                    label = { Text("Todas") }
+                )
+                categorias.forEach { categoria ->
+                    FilterChip(
+                        selected = categoriaSeleccionada == categoria,
+                        onClick = { categoriaSeleccionada = categoria },
+                        label = { Text(categoria) }
+                    )
+                }
+            }
 
             if (productosFiltrados.isEmpty()) {
                 Box(
@@ -136,10 +172,10 @@ fun PantallaCatalogo(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = if (textoBusqueda.isBlank()) {
+                        text = if (productos.isEmpty()) {
                             "No hay productos registrados todavía.\nToca + para agregar el primero."
                         } else {
-                            "No se encontraron productos para \"$textoBusqueda\"."
+                            "No se encontraron productos con ese filtro."
                         },
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center
@@ -157,7 +193,8 @@ fun PantallaCatalogo(
                             enAlerta = viewModel.estaEnAlerta(producto),
                             mostrarAcciones = puedeGestionar,
                             onEditar = { onIrAEditar(producto.sku) },
-                            onEliminar = { productoAEliminar = producto }
+                            onEliminar = { productoAEliminar = producto },
+                            onClick = { onIrADetalle(producto.sku) }
                         )
                     }
                 }

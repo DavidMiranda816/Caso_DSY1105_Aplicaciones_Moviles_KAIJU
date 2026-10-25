@@ -1,5 +1,6 @@
 package app.kaiju.inventory.ui.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,13 +15,18 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import app.kaiju.inventory.model.Producto
+import java.text.NumberFormat
+import java.util.Locale
+
+private val formatoPrecio = NumberFormat.getInstance(Locale("es", "CL"))
 
 @Composable
-fun TarjetaAlerta(producto: Producto) {
+fun TarjetaAlerta(producto: Producto, onClick: () -> Unit = {}) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
+            .padding(vertical = 6.dp)
+            .clickable(onClick = onClick),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant
         )
@@ -38,7 +44,7 @@ fun TarjetaAlerta(producto: Producto) {
                     modifier = Modifier.weight(1f)
                 )
                 Text(
-                    text = "$${producto.precio.toInt()}",
+                    text = "$${formatoPrecio.format(producto.precio.toInt())}",
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold
                 )
