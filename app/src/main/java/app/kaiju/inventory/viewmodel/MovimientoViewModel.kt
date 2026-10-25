@@ -45,10 +45,11 @@ class MovimientoViewModel(private val repository: InventarioRepository) : ViewMo
     fun actualizarMotivo(v: String) = _estado.update { it.copy(motivo = v, errorMotivo = null) }
     fun actualizarObservacion(v: String) = _estado.update { it.copy(observacion = v) }
 
-    fun validarFormulario(): Boolean {
+    fun validarFormulario(tiposPermitidos: List<String>): Boolean {
         val e = _estado.value
         val cantidad = e.cantidad.toIntOrNull()
         val errorProducto = if (e.codigoProducto.isBlank()) "Selecciona o escanea un producto" else null
+        val errorTipo = if (tiposPermitidos.isNotEmpty() && e.tipo !in tiposPermitidos) "No tienes permisos para este tipo de movimiento" else null
         val errorCantidad = when {
             cantidad == null -> "Ingresa una cantidad"
             cantidad == 0 && e.tipo != TipoMovimiento.AJUSTE -> "La cantidad debe ser mayor a 0"
@@ -56,11 +57,11 @@ class MovimientoViewModel(private val repository: InventarioRepository) : ViewMo
         }
         val errorMotivo = if (e.tipo == TipoMovimiento.AJUSTE && e.motivo.isBlank()) "El ajuste requiere un motivo" else null
         _estado.update { it.copy(errorProducto = errorProducto, errorCantidad = errorCantidad, errorMotivo = errorMotivo) }
-        return errorProducto == null && errorCantidad == null && errorMotivo == null
+        return errorProducto == null && errorTipo == null && errorCantidad == null && errorMotivo == null
     }
 
     fun confirmarMovimiento(usuario: String, tiposPermitidos: List<String>) {
-        if (!validarFormulario()) return
+        if (!validarFormulario(tiposPermitidos)) return
         val e = _estado.value
 
         viewModelScope.launch {
@@ -70,7 +71,7 @@ class MovimientoViewModel(private val repository: InventarioRepository) : ViewMo
 
             if (error == null) {
                 val productoActualizado = repository.buscar(e.codigoProducto)
-                if (productoActualizado != null && productoActualizado.stock <= 5) {
+                if (productoActualizado != null && productoActualizado.stock <= productoActualizado.stockMinimo) {
                     _productoParaNotificar.value = productoActualizado
                 }
 

@@ -18,7 +18,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import app.kaiju.inventory.model.TipoMovimiento
 import app.kaiju.inventory.ui.screen.*
 import app.kaiju.inventory.viewmodel.KaijuViewModel
 import app.kaiju.inventory.viewmodel.KaijuViewModelFactory
@@ -174,7 +173,7 @@ fun AppNavHost() {
                 PantallaMovimiento(
                     viewModel = movimientoViewModel,
                     usuarioActivo = usuarioActivo?.correo ?: "invitado",
-                    tiposPermitidos = TipoMovimiento.todos,
+                    tiposPermitidos = sesionViewModel.tiposMovimientoPermitidos(usuarioActivo),
                     onEscanear = { navController.navigate(Rutas.Escaner.ruta) },
                     onVolver = {
                         movimientoViewModel.reiniciar()
