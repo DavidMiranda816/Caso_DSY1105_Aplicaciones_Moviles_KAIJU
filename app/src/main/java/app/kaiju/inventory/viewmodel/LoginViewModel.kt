@@ -32,30 +32,24 @@ class LoginViewModel : ViewModel() {
         _errorLogin.update { it.copy(mensajeError = null) }
     }
 
-    fun iniciarSesion() {
+    fun iniciarSesion(validar: (String, String) -> Boolean) {
         val estadoActual = _loginEstado.value
-
         if (estadoActual.correo.isBlank() || estadoActual.contrasena.isBlank()) {
             _errorLogin.update { it.copy(mensajeError = "Por favor, completa todos los campos") }
             return
         }
-
         viewModelScope.launch {
             _estaCargando.value = true
             _errorLogin.update { it.copy(mensajeError = null) }
-
             try {
                 delay(1500)
-
-                if (estadoActual.correo == "admin@inventario.com" && estadoActual.contrasena == "123456") {
+                if (validar(estadoActual.correo.trim(), estadoActual.contrasena)) {
                     _loginEstado.update { it.copy(inicioCompletado = true) }
                 } else {
                     _errorLogin.update { it.copy(mensajeError = "Correo o contraseña incorrectos") }
                 }
             } catch (e: Exception) {
-                _errorLogin.update { 
-                    it.copy(mensajeError = e.localizedMessage ?: "Ocurrió un error inesperado") 
-                }
+                _errorLogin.update { it.copy(mensajeError = e.localizedMessage ?: "Ocurrió un error inesperado") }
             } finally {
                 _estaCargando.value = false
             }
