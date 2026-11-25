@@ -23,6 +23,7 @@ import app.kaiju.inventory.viewmodel.KaijuViewModel
 import app.kaiju.inventory.viewmodel.KaijuViewModelFactory
 import app.kaiju.inventory.viewmodel.LoginViewModel
 import app.kaiju.inventory.viewmodel.MovimientoViewModel
+import app.kaiju.inventory.viewmodel.RegistroViewModel
 import app.kaiju.inventory.viewmodel.SesionViewModel
 
 private data class ItemNav(
@@ -96,8 +97,24 @@ fun AppNavHost() {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     },
+                    onIrARegistro = {
+                        navController.navigate(Rutas.Registro.ruta)
+                    },
                     onEasterEggEncontrado = {
                         navController.navigate("easteregg")
+                    }
+                )
+            }
+
+            composable(Rutas.Registro.ruta) {
+                val registroViewModel: RegistroViewModel = viewModel()
+                PantallaRegistro(
+                    viewModel = registroViewModel,
+                    onRegistroExitoso = {
+                        navController.popBackStack()
+                    },
+                    onVolverLogin = {
+                        navController.popBackStack()
                     }
                 )
             }

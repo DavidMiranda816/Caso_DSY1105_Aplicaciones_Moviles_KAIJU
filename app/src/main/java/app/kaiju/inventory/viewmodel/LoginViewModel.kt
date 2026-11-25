@@ -4,14 +4,16 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import app.kaiju.inventory.model.LoginEstado
 import app.kaiju.inventory.model.ErrorLogin
-import kotlinx.coroutines.delay
+import app.kaiju.inventory.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(
+    private val authRepository: AuthRepository = AuthRepository()
+) : ViewModel() {
 
     private val _loginEstado = MutableStateFlow(LoginEstado())
     val loginEstado: StateFlow<LoginEstado> = _loginEstado.asStateFlow()
@@ -21,6 +23,9 @@ class LoginViewModel : ViewModel() {
 
     private val _estaCargando = MutableStateFlow(false)
     val estaCargando: StateFlow<Boolean> = _estaCargando.asStateFlow()
+
+    var jwtToken: String? = null
+        private set
 
     fun alCambiarCorreo(correo: String) {
         _loginEstado.update { it.copy(correo = correo) }
@@ -32,7 +37,7 @@ class LoginViewModel : ViewModel() {
         _errorLogin.update { it.copy(mensajeError = null) }
     }
 
-    fun iniciarSesion(validar: (String, String) -> Boolean) {
+    fun iniciarSesion(validarLocal: (String, String) -> Boolean = { _, _ -> false }) {
         val estadoActual = _loginEstado.value
         if (estadoActual.correo.isBlank() || estadoActual.contrasena.isBlank()) {
             _errorLogin.update { it.copy(mensajeError = "Por favor, completa todos los campos") }
@@ -42,14 +47,25 @@ class LoginViewModel : ViewModel() {
             _estaCargando.value = true
             _errorLogin.update { it.copy(mensajeError = null) }
             try {
-                delay(1500)
-                if (validar(estadoActual.correo.trim(), estadoActual.contrasena)) {
+                val resultado = authRepository.login(estadoActual.correo.trim(), estadoActual.contrasena)
+                if (resultado.isSuccess) {
+                    val loginResponse = resultado.getOrNull()
+                    jwtToken = loginResponse?.token
                     _loginEstado.update { it.copy(inicioCompletado = true) }
                 } else {
-                    _errorLogin.update { it.copy(mensajeError = "Correo o contraseña incorrectos") }
+                    if (validarLocal(estadoActual.correo.trim(), estadoActual.contrasena)) {
+                        _loginEstado.update { it.copy(inicioCompletado = true) }
+                    } else {
+                        val errMessage = resultado.exceptionOrNull()?.localizedMessage ?: "Credenciales inválidas"
+                        _errorLogin.update { it.copy(mensajeError = "Error de autenticación: $errMessage") }
+                    }
                 }
             } catch (e: Exception) {
-                _errorLogin.update { it.copy(mensajeError = e.localizedMessage ?: "Ocurrió un error inesperado") }
+                if (validarLocal(estadoActual.correo.trim(), estadoActual.contrasena)) {
+                    _loginEstado.update { it.copy(inicioCompletado = true) }
+                } else {
+                    _errorLogin.update { it.copy(mensajeError = "No se pudo conectar al servidor: ${e.localizedMessage}") }
+                }
             } finally {
                 _estaCargando.value = false
             }

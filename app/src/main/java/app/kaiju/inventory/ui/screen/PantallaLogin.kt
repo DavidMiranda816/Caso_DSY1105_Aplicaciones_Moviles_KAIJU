@@ -3,7 +3,7 @@ package app.kaiju.inventory.ui.screen
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable // 🔔 NUEVO
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -30,6 +30,7 @@ fun PantallaLogin(
     modeloVista: LoginViewModel,
     validarCredenciales: (String, String) -> Boolean,
     alIngresarExitosamente: () -> Unit,
+    onIrARegistro: () -> Unit,
     onEasterEggEncontrado: () -> Unit
 ) {
     val loginEstado by modeloVista.loginEstado.collectAsState()
@@ -37,7 +38,6 @@ fun PantallaLogin(
     val estaCargando by modeloVista.estaCargando.collectAsState()
 
     var visible by remember { mutableStateOf(false) }
-
     var clicsEasterEgg by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
@@ -130,7 +130,7 @@ fun PantallaLogin(
                             }
                         )
                         Text(
-                            text = "Inicia sesión para gestionar el inventario",
+                            text = "Inicia sesión o conéctate al backend",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -189,7 +189,16 @@ fun PantallaLogin(
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        TextButton(
+                            onClick = onIrARegistro,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text("¿No tienes cuenta? Regístrate aquí")
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
