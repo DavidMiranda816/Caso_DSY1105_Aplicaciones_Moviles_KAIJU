@@ -12,3 +12,6 @@ data class Usuario(
     val nombre: String,
     val rol: Rol
 )
+
+fun rolDesdeBackend(rol: String): Rol =
+    if (rol == "ADMIN") Rol.ADMINISTRADOR else Rol.VENDEDOR

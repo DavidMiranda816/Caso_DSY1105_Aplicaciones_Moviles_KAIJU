@@ -22,13 +22,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import app.kaiju.inventory.data.model.LoginResponse
 import app.kaiju.inventory.ui.components.CampoTexto
 import app.kaiju.inventory.viewmodel.LoginViewModel
 
 @Composable
 fun PantallaLogin(
     modeloVista: LoginViewModel,
-    validarCredenciales: (String, String) -> Boolean,
+    alAutenticar: (LoginResponse) -> Unit,
     alIngresarExitosamente: () -> Unit,
     onIrARegistro: () -> Unit,
     onEasterEggEncontrado: () -> Unit
@@ -130,7 +131,7 @@ fun PantallaLogin(
                             }
                         )
                         Text(
-                            text = "Inicia sesión o conéctate al backend",
+                            text = "Inicia sesión para continuar",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -171,7 +172,7 @@ fun PantallaLogin(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Button(
-                            onClick = { modeloVista.iniciarSesion(validarCredenciales) },
+                            onClick = { modeloVista.iniciarSesion(alAutenticar) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
@@ -196,57 +197,6 @@ fun PantallaLogin(
                             modifier = Modifier.fillMaxWidth()
                         ) {
                             Text("¿No tienes cuenta? Regístrate aquí")
-                        }
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Accesos rápidos de prueba:",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = {
-                                    modeloVista.alCambiarCorreo("ana@kaiju.cl")
-                                    modeloVista.alCambiarContrasena("1234")
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                            ) {
-                                Text("Admin", style = MaterialTheme.typography.labelSmall)
-                            }
-                            OutlinedButton(
-                                onClick = {
-                                    modeloVista.alCambiarCorreo("beto@kaiju.cl")
-                                    modeloVista.alCambiarContrasena("1234")
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                            ) {
-                                Text("Vendedor", style = MaterialTheme.typography.labelSmall)
-                            }
-                            OutlinedButton(
-                                onClick = {
-                                    modeloVista.alCambiarCorreo("carla@kaiju.cl")
-                                    modeloVista.alCambiarContrasena("1234")
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                            ) {
-                                Text("Encargado", style = MaterialTheme.typography.labelSmall)
-                            }
                         }
                     }
                 }

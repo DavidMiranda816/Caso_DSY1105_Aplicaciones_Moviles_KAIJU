@@ -10,6 +10,7 @@ sealed class Rutas(val ruta: String) {
     object Alertas : Rutas("alertas")
     object Escaner : Rutas("escaner")
     object Movimiento : Rutas("movimiento")
+    object Usuarios : Rutas("usuarios")
 
     object DetalleProducto : Rutas("detalle_producto?$ARG_SKU={$ARG_SKU}") {
         fun conSku(sku: String) = "detalle_producto?$ARG_SKU=${Uri.encode(sku)}"

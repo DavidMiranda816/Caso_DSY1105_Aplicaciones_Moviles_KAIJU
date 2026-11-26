@@ -3,6 +3,7 @@ package app.kaiju.inventory.navegation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
@@ -25,6 +26,7 @@ import app.kaiju.inventory.viewmodel.LoginViewModel
 import app.kaiju.inventory.viewmodel.MovimientoViewModel
 import app.kaiju.inventory.viewmodel.RegistroViewModel
 import app.kaiju.inventory.viewmodel.SesionViewModel
+import app.kaiju.inventory.viewmodel.UsuariosViewModel
 
 private data class ItemNav(
     val ruta: String,
@@ -59,6 +61,9 @@ fun AppNavHost() {
         if (puedeVerAlertas) {
             add(ItemNav(Rutas.Alertas.ruta, Rutas.Alertas.ruta, Icons.Filled.Warning, "Alertas"))
         }
+        if (puedeGestionar) {
+            add(ItemNav(Rutas.Usuarios.ruta, Rutas.Usuarios.ruta, Icons.Filled.Person, "Usuarios"))
+        }
     }
     val mostrarBottomBar = items.any { it.ruta == rutaActual }
 
@@ -91,7 +96,7 @@ fun AppNavHost() {
                 val loginViewModel: LoginViewModel = viewModel()
                 PantallaLogin(
                     modeloVista = loginViewModel,
-                    validarCredenciales = { correo, clave -> sesionViewModel.iniciarSesion(correo, clave) },
+                    alAutenticar = { respuesta -> sesionViewModel.iniciarSesion(respuesta) },
                     alIngresarExitosamente = {
                         navController.navigate(Rutas.Inventario.ruta) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
@@ -184,6 +189,15 @@ fun AppNavHost() {
                 PantallaAlertas(
                     viewModel = viewModel,
                     onIrADetalle = { sku -> navController.navigate(Rutas.DetalleProducto.conSku(sku)) }
+                )
+            }
+
+            composable(Rutas.Usuarios.ruta) {
+                val usuariosViewModel: UsuariosViewModel = viewModel()
+                PantallaUsuarios(
+                    viewModel = usuariosViewModel,
+                    token = sesionViewModel.token ?: "",
+                    correoActual = usuarioActivo?.correo ?: ""
                 )
             }
 
