@@ -3,6 +3,7 @@ package app.kaiju.inventory.ui.screen
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -21,20 +22,24 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import app.kaiju.inventory.data.model.LoginResponse
 import app.kaiju.inventory.ui.components.CampoTexto
 import app.kaiju.inventory.viewmodel.LoginViewModel
 
 @Composable
 fun PantallaLogin(
     modeloVista: LoginViewModel,
-    validarCredenciales: (String, String) -> Boolean,
-    alIngresarExitosamente: () -> Unit
+    alAutenticar: (LoginResponse) -> Boolean,
+    alIngresarExitosamente: () -> Unit,
+    onEasterEggEncontrado: () -> Unit
 ) {
     val loginEstado by modeloVista.loginEstado.collectAsState()
     val errorLogin by modeloVista.errorLogin.collectAsState()
     val estaCargando by modeloVista.estaCargando.collectAsState()
 
     var visible by remember { mutableStateOf(false) }
+    var clicsEasterEgg by remember { mutableStateOf(0) }
+
     LaunchedEffect(Unit) {
         visible = true
     }
@@ -91,7 +96,14 @@ fun PantallaLogin(
                             modifier = Modifier
                                 .size(72.dp)
                                 .clip(CircleShape)
-                                .background(MaterialTheme.colorScheme.primaryContainer),
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .clickable {
+                                    clicsEasterEgg++
+                                    if (clicsEasterEgg >= 7) {
+                                        clicsEasterEgg = 0
+                                        onEasterEggEncontrado()
+                                    }
+                                },
                             contentAlignment = Alignment.Center
                         ) {
                             Icon(
@@ -108,10 +120,17 @@ fun PantallaLogin(
                             text = "Kaiju Inventory",
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.primary
+                            color = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.clickable {
+                                clicsEasterEgg++
+                                if (clicsEasterEgg >= 7) {
+                                    clicsEasterEgg = 0
+                                    onEasterEggEncontrado()
+                                }
+                            }
                         )
                         Text(
-                            text = "Inicia sesión para gestionar el inventario",
+                            text = "Inicia sesión para continuar",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center
@@ -152,7 +171,7 @@ fun PantallaLogin(
                         Spacer(modifier = Modifier.height(24.dp))
 
                         Button(
-                            onClick = { modeloVista.iniciarSesion(validarCredenciales) },
+                            onClick = { modeloVista.iniciarSesion(alAutenticar) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(50.dp),
@@ -167,57 +186,6 @@ fun PantallaLogin(
                                 )
                             } else {
                                 Text("Iniciar Sesión", style = MaterialTheme.typography.titleMedium)
-                            }
-                        }
-
-                        Spacer(modifier = Modifier.height(20.dp))
-
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
-
-                        Spacer(modifier = Modifier.height(16.dp))
-
-                        Text(
-                            text = "Accesos rápidos de prueba:",
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(modifier = Modifier.height(10.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            OutlinedButton(
-                                onClick = {
-                                    modeloVista.alCambiarCorreo("ana@kaiju.cl")
-                                    modeloVista.alCambiarContrasena("1234")
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                            ) {
-                                Text("Admin", style = MaterialTheme.typography.labelSmall)
-                            }
-                            OutlinedButton(
-                                onClick = {
-                                    modeloVista.alCambiarCorreo("beto@kaiju.cl")
-                                    modeloVista.alCambiarContrasena("1234")
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                            ) {
-                                Text("Vendedor", style = MaterialTheme.typography.labelSmall)
-                            }
-                            OutlinedButton(
-                                onClick = {
-                                    modeloVista.alCambiarCorreo("carla@kaiju.cl")
-                                    modeloVista.alCambiarContrasena("1234")
-                                },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(10.dp),
-                                contentPadding = PaddingValues(horizontal = 4.dp, vertical = 8.dp)
-                            ) {
-                                Text("Encargado", style = MaterialTheme.typography.labelSmall)
                             }
                         }
                     }

@@ -5,10 +5,12 @@ import android.net.Uri
 const val ARG_SKU = "sku"
 sealed class Rutas(val ruta: String) {
     object Login : Rutas("login")
+    object EasterEgg : Rutas("easteregg")
     object Inventario : Rutas("inventario")
     object Alertas : Rutas("alertas")
     object Escaner : Rutas("escaner")
     object Movimiento : Rutas("movimiento")
+    object Usuarios : Rutas("usuarios")
 
     object DetalleProducto : Rutas("detalle_producto?$ARG_SKU={$ARG_SKU}") {
         fun conSku(sku: String) = "detalle_producto?$ARG_SKU=${Uri.encode(sku)}"

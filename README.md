@@ -16,7 +16,7 @@ Aplicación móvil Android (MVP) para la empresa Kaiju, orientada a la gestión,
 ## Funcionalidades implementadas
 | RF | Funcionalidad |
 |---|---|
-| RF-01 | Inicio de sesión con usuarios de prueba; cada perfil ve solo las opciones que le corresponden |
+| RF-01 | Inicio de sesión mediante el backend compartido con Veterinaria San Marcos |
 | RF-02 | Catálogo de productos con nombre, categoría, precio y stock |
 | RF-03 | Búsqueda por nombre, SKU o marca y filtro por categoría |
 | RF-04 | Detalle del producto con historial de movimientos |
@@ -37,10 +37,22 @@ Aplicación móvil Android (MVP) para la empresa Kaiju, orientada a la gestión,
 | Ajuste | ✅ | ✅ | ❌ |
 | Ver alertas | ✅ | ✅ | ❌ |
 
-### Usuarios de prueba (contraseña: 1234)
-- ana@kaiju.cl — Administrador
-- beto@kaiju.cl — Vendedor
-- carla@kaiju.cl — Encargado de inventario
+### Administración de usuarios
+
+Desde **Usuarios**, un administrador puede listar cuentas activas de Kaiju, crear una cuenta con perfil, editar su nombre y correo, y desactivarla. Los perfiles que devuelve la API son `ADMIN`, `VENDEDOR` y `ENCARGADO`. Los productos y movimientos se guardan en Room.
+
+## Endpoints utilizados
+
+[Backend compartido de Veterinaria San Marcos](https://github.com/DavidMiranda816/Caso-DSY1104-Fullstack-Veterinaria-San-Marco-Backend)
+
+| Método y ruta | Uso en Kaiju |
+|---|---|
+| `POST /api/auth/login` | Obtiene el token y el perfil de la cuenta. |
+| `GET /api/usuarios` | Lista usuarios con el token de administrador. |
+| `POST /api/usuarios` | Crea un usuario con nombre, correo, contraseña y rol. |
+| `PUT /api/usuarios/{id}` | Edita nombre y correo. |
+| `PATCH /api/usuarios/{id}/desactivar` | Quita una cuenta del listado activo e impide que vuelva a iniciar sesión. |
+| `GET https://pokeapi.co/api/v2/pokemon/pikachu` | Muestra la ficha de Pikachu en la pantalla oculta. |
 
 ## Decisiones del equipo
 
@@ -60,16 +72,20 @@ Además, al confirmar un movimiento el teléfono vibra (LocalHapticFeedback, sin
 ### Módulo propio: escáner QR para registrar movimientos
 Desde la pestaña Escanear, el usuario lee el código QR de un producto y la app abre el formulario de movimiento con ese producto ya seleccionado. En una bodega con muchos productos parecidos, evita buscarlos a mano en una lista y reduce errores al registrar entradas y salidas. Si no hay permiso de cámara, se puede ingresar el SKU manualmente.
 
+### Easter Egg (Funcionalidad oculta)
+En la pantalla de inicio de sesión (`PantallaLogin`), se puede presionar **7 veces consecutivas** el ícono del logo de la app o el título *"Kaiju Inventory"*. Esto activa una navegación a la pantalla especial `PantallaEasterEgg`, la cual se conecta a la **PokéAPI** vía Retrofit para consultar y mostrar la información y el sprite oficial de Pikachu.
+
 ### Identidad visual
 Paleta propia en `ui/theme` (morado como color principal, amarillo y naranjo para acentos y rojo para alertas), con buen contraste para leer en bodega.
 
 ## Pasos para ejecutar
-1. Clonar el repositorio:
-   `git clone https://github.com/DavidMiranda816/Caso_DSY1105_Aplicaciones_Moviles_KAIJU.git`
-2. Abrir la carpeta en Android Studio y esperar la sincronización de Gradle.
-3. Crear o elegir un emulador (Device Manager) con Android 7.0 (API 24) o superior.
-4. Presionar Run ▶.
-5. Iniciar sesión con un usuario de prueba o con los botones de acceso rápido.
+
+1. Levanta el backend compartido con MySQL y la migración V2. Incorpora la rama [`feat/usuarios-kaiju`](https://github.com/DavidMiranda816/Caso-DSY1104-Fullstack-Veterinaria-San-Marco-Backend/tree/feat/usuarios-kaiju) sobre la rama del backend que ya usas para conservar sus migraciones. Para el primer ingreso usa una cuenta `ADMIN` existente. Esa cuenta puede crear los perfiles de vendedor y encargado desde Kaiju.
+2. Abre este proyecto en Android Studio. Sincroniza Gradle, instala el SDK Android 37 y selecciona un emulador o teléfono con Android 7.0 (API 24) o superior.
+3. Para una demo con conexión local, usa un emulador de Android 16 (API 36). La app usa `http://10.0.2.2:8080/` por defecto. Si el backend vive en EC2, puedes reenviar su puerto 8080 a tu equipo por SSH y continuar usando esa URL en el emulador. Para una instancia accesible por HTTPS, define `KAIJU_BACKEND_URL=https://tu-dominio/` en `~/.gradle/gradle.properties` y recompila. Usa la raíz de la API, sin agregar `/api`.
+4. En un teléfono por USB sin servidor HTTPS, ejecuta `adb reverse tcp:8080 tcp:8080` y configura `KAIJU_BACKEND_URL=http://127.0.0.1:8080/` antes de compilar. El backend debe ser accesible en el puerto 8080 del equipo, directamente o por el túnel SSH.
+5. Ejecuta la app e inicia sesión con la cuenta de administrador. En **Usuarios**, crea un vendedor, edita su nombre, cierra sesión y prueba la nueva cuenta. Vuelve al administrador, desactiva una segunda cuenta de prueba y comprueba que el login de esa cuenta se rechaza.
+6. Ejecuta `./gradlew testDebugUnitTest` y, con el emulador iniciado, `./gradlew connectedDebugAndroidTest`.
 
 ## Diseño y planificación
 - Diseño (sketch, wireframe y mockup): [Carpeta de Drive del equipo](https://drive.google.com/drive/folders/1XL4gLUkanAdTLWINhARqaPNu_OugBA-n?usp=sharing)

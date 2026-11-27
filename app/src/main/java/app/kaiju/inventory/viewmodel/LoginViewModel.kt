@@ -2,16 +2,21 @@ package app.kaiju.inventory.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import app.kaiju.inventory.data.model.LoginResponse
 import app.kaiju.inventory.model.LoginEstado
 import app.kaiju.inventory.model.ErrorLogin
-import kotlinx.coroutines.delay
+import app.kaiju.inventory.repository.AuthRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
-class LoginViewModel : ViewModel() {
+class LoginViewModel(
+    private val authRepository: AuthRepository = AuthRepository()
+) : ViewModel() {
 
     private val _loginEstado = MutableStateFlow(LoginEstado())
     val loginEstado: StateFlow<LoginEstado> = _loginEstado.asStateFlow()
@@ -32,7 +37,8 @@ class LoginViewModel : ViewModel() {
         _errorLogin.update { it.copy(mensajeError = null) }
     }
 
-    fun iniciarSesion(validar: (String, String) -> Boolean) {
+    fun iniciarSesion(alAutenticar: (LoginResponse) -> Boolean) {
+        if (_estaCargando.value) return
         val estadoActual = _loginEstado.value
         if (estadoActual.correo.isBlank() || estadoActual.contrasena.isBlank()) {
             _errorLogin.update { it.copy(mensajeError = "Por favor, completa todos los campos") }
@@ -41,18 +47,24 @@ class LoginViewModel : ViewModel() {
         viewModelScope.launch {
             _estaCargando.value = true
             _errorLogin.update { it.copy(mensajeError = null) }
-            try {
-                delay(1500)
-                if (validar(estadoActual.correo.trim(), estadoActual.contrasena)) {
-                    _loginEstado.update { it.copy(inicioCompletado = true) }
-                } else {
-                    _errorLogin.update { it.copy(mensajeError = "Correo o contraseña incorrectos") }
+            val resultado = authRepository.login(estadoActual.correo.trim(), estadoActual.contrasena)
+            val loginResponse = resultado.getOrNull()
+            if (loginResponse != null && alAutenticar(loginResponse)) {
+                _loginEstado.update { it.copy(contrasena = "", inicioCompletado = true) }
+            } else {
+                val mensaje = when (val error = resultado.exceptionOrNull()) {
+                    null -> "Esta cuenta no tiene un perfil activo para Kaiju"
+                    is HttpException -> if (error.code() == 401) {
+                        "Correo o contraseña incorrectos"
+                    } else {
+                        "El servidor no pudo iniciar la sesión"
+                    }
+                    is IOException -> "No se pudo conectar con el backend"
+                    else -> "No se pudo iniciar sesión"
                 }
-            } catch (e: Exception) {
-                _errorLogin.update { it.copy(mensajeError = e.localizedMessage ?: "Ocurrió un error inesperado") }
-            } finally {
-                _estaCargando.value = false
+                _errorLogin.update { it.copy(mensajeError = mensaje) }
             }
+            _estaCargando.value = false
         }
     }
 }

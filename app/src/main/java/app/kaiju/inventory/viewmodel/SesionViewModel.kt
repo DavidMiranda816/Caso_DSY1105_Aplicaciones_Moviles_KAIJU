@@ -1,10 +1,11 @@
 package app.kaiju.inventory.viewmodel
 
 import androidx.lifecycle.ViewModel
+import app.kaiju.inventory.data.model.LoginResponse
 import app.kaiju.inventory.model.Rol
 import app.kaiju.inventory.model.TipoMovimiento
 import app.kaiju.inventory.model.Usuario
-import app.kaiju.inventory.repository.DatosDePrueba
+import app.kaiju.inventory.model.rolDesdeBackend
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -14,19 +15,27 @@ class SesionViewModel : ViewModel() {
     private val _usuarioActivo = MutableStateFlow<Usuario?>(null)
     val usuarioActivo: StateFlow<Usuario?> = _usuarioActivo.asStateFlow()
 
-    fun iniciarSesion(correo: String, contrasena: String): Boolean {
-        val usuario = DatosDePrueba.usuarios.find {
-            it.correo == correo && it.contrasena == contrasena
-        }
-        return if (usuario != null) {
-            _usuarioActivo.value = usuario
-            true
-        } else {
-            false
-        }
+    var token: String? = null
+        private set
+
+    fun iniciarSesion(respuesta: LoginResponse): Boolean {
+        cerrarSesion()
+        val usuario = respuesta.usuario ?: return false
+        val rol = rolDesdeBackend(usuario.rol) ?: return false
+        if (!usuario.activo || respuesta.token.isBlank()) return false
+
+        token = respuesta.token
+        _usuarioActivo.value = Usuario(
+            id = usuario.id,
+            correo = usuario.correo,
+            nombre = usuario.nombre,
+            rol = rol
+        )
+        return true
     }
 
     fun cerrarSesion() {
+        token = null
         _usuarioActivo.value = null
     }
 

@@ -1,8 +1,6 @@
 package app.kaiju.inventory.repository
 
 import app.kaiju.inventory.model.Producto
-import app.kaiju.inventory.model.Rol
-import app.kaiju.inventory.model.Usuario
 
 
 object DatosDePrueba {
@@ -118,11 +116,5 @@ object DatosDePrueba {
             estadoProducto = true,
             stockMinimo = 3
         )
-    )
-
-    val usuarios: List<Usuario> = listOf(
-        Usuario(correo = "ana@kaiju.cl", contrasena = "1234", nombre = "Ana", rol = Rol.ADMINISTRADOR),
-        Usuario(correo = "beto@kaiju.cl", contrasena = "1234", nombre = "Beto", rol = Rol.VENDEDOR),
-        Usuario(correo = "carla@kaiju.cl", contrasena = "1234", nombre = "Carla", rol = Rol.ENCARGADO_INVENTARIO)
     )
 }

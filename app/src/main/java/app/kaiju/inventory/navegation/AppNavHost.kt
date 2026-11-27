@@ -3,6 +3,7 @@ package app.kaiju.inventory.navegation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.SwapHoriz
 import androidx.compose.material.icons.filled.Warning
@@ -24,6 +25,7 @@ import app.kaiju.inventory.viewmodel.KaijuViewModelFactory
 import app.kaiju.inventory.viewmodel.LoginViewModel
 import app.kaiju.inventory.viewmodel.MovimientoViewModel
 import app.kaiju.inventory.viewmodel.SesionViewModel
+import app.kaiju.inventory.viewmodel.UsuariosViewModel
 
 private data class ItemNav(
     val ruta: String,
@@ -58,8 +60,21 @@ fun AppNavHost() {
         if (puedeVerAlertas) {
             add(ItemNav(Rutas.Alertas.ruta, Rutas.Alertas.ruta, Icons.Filled.Warning, "Alertas"))
         }
+        if (puedeGestionar) {
+            add(ItemNav(Rutas.Usuarios.ruta, Rutas.Usuarios.ruta, Icons.Filled.Person, "Usuarios"))
+        }
     }
-    val mostrarBottomBar = items.any { it.ruta == rutaActual }
+    val mostrarBottomBar = usuarioActivo != null && items.any { it.ruta == rutaActual }
+
+    LaunchedEffect(usuarioActivo, rutaActual) {
+        if (usuarioActivo == null && rutaActual != null &&
+            rutaActual != Rutas.Login.ruta && rutaActual != Rutas.EasterEgg.ruta
+        ) {
+            navController.navigate(Rutas.Login.ruta) {
+                popUpTo(navController.graph.id) { inclusive = true }
+            }
+        }
+    }
 
     Scaffold(
         bottomBar = {
@@ -90,19 +105,23 @@ fun AppNavHost() {
                 val loginViewModel: LoginViewModel = viewModel()
                 PantallaLogin(
                     modeloVista = loginViewModel,
-                    validarCredenciales = { correo, clave -> sesionViewModel.iniciarSesion(correo, clave) },
+                    alAutenticar = { respuesta -> sesionViewModel.iniciarSesion(respuesta) },
                     alIngresarExitosamente = {
                         navController.navigate(Rutas.Inventario.ruta) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
+                    },
+                    onEasterEggEncontrado = {
+                        navController.navigate(Rutas.EasterEgg.ruta)
                     }
                 )
             }
 
             composable(Rutas.Inventario.ruta) {
+                val cuenta = usuarioActivo ?: return@composable
                 PantallaCatalogo(
                     viewModel = viewModel,
-                    usuario = usuarioActivo,
+                    usuario = cuenta,
                     puedeGestionar = puedeGestionar,
                     onIrAAgregar = { navController.navigate(Rutas.Agregar.conSku()) },
                     onIrAEditar = { sku -> navController.navigate(Rutas.Agregar.conSku(sku)) },
@@ -126,6 +145,7 @@ fun AppNavHost() {
                     defaultValue = null
                 })
             ) { entry ->
+                if (usuarioActivo == null) return@composable
                 val sku = entry.arguments?.getString(ARG_SKU) ?: ""
                 PantallaDetalleProducto(
                     sku = sku,
@@ -149,6 +169,7 @@ fun AppNavHost() {
                     defaultValue = null
                 })
             ) { entry ->
+                if (!puedeGestionar) return@composable
                 PantallaFormularioProducto(
                     viewModel = viewModel,
                     skuEditar = entry.arguments?.getString(ARG_SKU),
@@ -161,13 +182,23 @@ fun AppNavHost() {
             }
 
             composable(Rutas.Alertas.ruta) {
+                if (!puedeVerAlertas) return@composable
                 PantallaAlertas(
                     viewModel = viewModel,
                     onIrADetalle = { sku -> navController.navigate(Rutas.DetalleProducto.conSku(sku)) }
                 )
             }
 
+            composable(Rutas.Usuarios.ruta) {
+                val cuenta = usuarioActivo
+                val token = sesionViewModel.token
+                if (puedeGestionar && cuenta != null && token != null) {
+                    PantallaUsuarios(viewModel = viewModel(), token = token, idActual = cuenta.id)
+                }
+            }
+
             composable(Rutas.Escaner.ruta) {
+                if (tiposPermitidos.isEmpty()) return@composable
                 PantallaEscaner(
                     onCodigoLeido = { codigo ->
                         movimientoViewModel.codigoLeido(codigo)
@@ -187,9 +218,10 @@ fun AppNavHost() {
             }
 
             composable(Rutas.Movimiento.ruta) {
+                val cuenta = usuarioActivo ?: return@composable
                 PantallaMovimiento(
                     viewModel = movimientoViewModel,
-                    usuarioActivo = usuarioActivo?.correo ?: "invitado",
+                    usuarioActivo = cuenta.correo,
                     tiposPermitidos = tiposPermitidos,
                     onEscanear = { navController.navigate(Rutas.Escaner.ruta) },
                     onVolver = {
@@ -197,6 +229,10 @@ fun AppNavHost() {
                         navController.popBackStack()
                     }
                 )
+            }
+
+            composable(Rutas.EasterEgg.ruta) {
+                PantallaEasterEgg(onVolver = { navController.popBackStack() })
             }
         }
     }
