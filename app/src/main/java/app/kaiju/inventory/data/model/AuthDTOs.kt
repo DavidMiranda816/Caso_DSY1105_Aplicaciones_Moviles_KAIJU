@@ -11,10 +11,11 @@ data class LoginResponse(
     val usuario: UsuarioResponse?
 )
 
-data class UsuarioRequest(
+data class UsuarioAltaRequest(
     val nombre: String,
     val correo: String,
-    val password: String
+    val password: String,
+    val rol: String
 )
 
 data class UsuarioResponse(

@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import retrofit2.HttpException
+import java.io.IOException
 
 class LoginViewModel(
     private val authRepository: AuthRepository = AuthRepository()
@@ -35,7 +37,8 @@ class LoginViewModel(
         _errorLogin.update { it.copy(mensajeError = null) }
     }
 
-    fun iniciarSesion(alAutenticar: (LoginResponse) -> Unit) {
+    fun iniciarSesion(alAutenticar: (LoginResponse) -> Boolean) {
+        if (_estaCargando.value) return
         val estadoActual = _loginEstado.value
         if (estadoActual.correo.isBlank() || estadoActual.contrasena.isBlank()) {
             _errorLogin.update { it.copy(mensajeError = "Por favor, completa todos los campos") }
@@ -46,12 +49,20 @@ class LoginViewModel(
             _errorLogin.update { it.copy(mensajeError = null) }
             val resultado = authRepository.login(estadoActual.correo.trim(), estadoActual.contrasena)
             val loginResponse = resultado.getOrNull()
-            if (loginResponse?.usuario != null) {
-                alAutenticar(loginResponse)
-                _loginEstado.update { it.copy(inicioCompletado = true) }
+            if (loginResponse != null && alAutenticar(loginResponse)) {
+                _loginEstado.update { it.copy(contrasena = "", inicioCompletado = true) }
             } else {
-                val errMessage = resultado.exceptionOrNull()?.localizedMessage ?: "Credenciales inválidas"
-                _errorLogin.update { it.copy(mensajeError = "Error de autenticación: $errMessage") }
+                val mensaje = when (val error = resultado.exceptionOrNull()) {
+                    null -> "Esta cuenta no tiene un perfil activo para Kaiju"
+                    is HttpException -> if (error.code() == 401) {
+                        "Correo o contraseña incorrectos"
+                    } else {
+                        "El servidor no pudo iniciar la sesión"
+                    }
+                    is IOException -> "No se pudo conectar con el backend"
+                    else -> "No se pudo iniciar sesión"
+                }
+                _errorLogin.update { it.copy(mensajeError = mensaje) }
             }
             _estaCargando.value = false
         }

@@ -29,9 +29,8 @@ import app.kaiju.inventory.viewmodel.LoginViewModel
 @Composable
 fun PantallaLogin(
     modeloVista: LoginViewModel,
-    alAutenticar: (LoginResponse) -> Unit,
+    alAutenticar: (LoginResponse) -> Boolean,
     alIngresarExitosamente: () -> Unit,
-    onIrARegistro: () -> Unit,
     onEasterEggEncontrado: () -> Unit
 ) {
     val loginEstado by modeloVista.loginEstado.collectAsState()
@@ -188,15 +187,6 @@ fun PantallaLogin(
                             } else {
                                 Text("Iniciar Sesión", style = MaterialTheme.typography.titleMedium)
                             }
-                        }
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        TextButton(
-                            onClick = onIrARegistro,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text("¿No tienes cuenta? Regístrate aquí")
                         }
                     }
                 }

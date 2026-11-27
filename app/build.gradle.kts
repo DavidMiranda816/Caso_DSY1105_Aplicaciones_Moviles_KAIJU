@@ -4,6 +4,12 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+val kaijuBackendUrl = providers.gradleProperty("KAIJU_BACKEND_URL")
+    .orElse("http://10.0.2.2:8080/")
+    .get()
+    .trim()
+    .trimEnd('/') + "/"
+
 android {
     namespace = "app.kaiju.inventory"
     compileSdk {
@@ -16,6 +22,8 @@ android {
         targetSdk = 37
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "BACKEND_URL", "\"$kaijuBackendUrl\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -33,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     testOptions {
         unitTests.all {
@@ -56,8 +65,6 @@ dependencies {
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
     implementation("com.squareup.retrofit2:retrofit:3.0.0")
     implementation("com.squareup.retrofit2:converter-gson:3.0.0")
-    implementation("io.coil-kt.coil3:coil-compose:3.3.0")
-    implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
     implementation("io.coil-kt.coil3:coil-compose:3.3.0")
     implementation("io.coil-kt.coil3:coil-network-okhttp:3.3.0")
     implementation(platform(libs.androidx.compose.bom))

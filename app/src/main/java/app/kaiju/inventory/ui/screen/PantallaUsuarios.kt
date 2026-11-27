@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -18,6 +21,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -30,10 +34,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import app.kaiju.inventory.data.model.UsuarioResponse
+import app.kaiju.inventory.model.Rol
 import app.kaiju.inventory.model.rolDesdeBackend
 import app.kaiju.inventory.ui.components.CampoTexto
 import app.kaiju.inventory.viewmodel.UsuariosViewModel
@@ -43,28 +50,36 @@ import app.kaiju.inventory.viewmodel.UsuariosViewModel
 fun PantallaUsuarios(
     viewModel: UsuariosViewModel,
     token: String,
-    correoActual: String
+    idActual: Long
 ) {
     val estado by viewModel.uiState.collectAsState()
     var creando by remember { mutableStateOf(false) }
     var usuarioAEditar by remember { mutableStateOf<UsuarioResponse?>(null) }
     var usuarioAEliminar by remember { mutableStateOf<UsuarioResponse?>(null) }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(token) {
         viewModel.cargar(token)
     }
 
     if (creando || usuarioAEditar != null) {
         DialogoUsuario(
             usuario = usuarioAEditar,
-            onGuardar = { nombre, correo, password ->
+            cargando = estado.cargando,
+            error = estado.error,
+            onGuardar = { nombre, correo, password, rol ->
                 val usuario = usuarioAEditar
-                if (usuario == null) viewModel.crear(token, nombre, correo, password)
-                else viewModel.editar(token, usuario.id, nombre, correo)
-                creando = false
-                usuarioAEditar = null
+                val cerrarFormulario = {
+                    creando = false
+                    usuarioAEditar = null
+                }
+                if (usuario == null) {
+                    viewModel.crear(token, nombre, correo, password, rol, cerrarFormulario)
+                } else {
+                    viewModel.editar(token, usuario.id, nombre, correo, cerrarFormulario)
+                }
             },
             onCancelar = {
+                viewModel.limpiarError()
                 creando = false
                 usuarioAEditar = null
             }
@@ -99,7 +114,12 @@ fun PantallaUsuarios(
             )
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { creando = true }) {
+            FloatingActionButton(onClick = {
+                if (!estado.cargando) {
+                    viewModel.limpiarError()
+                    creando = true
+                }
+            }) {
                 Text("+", style = MaterialTheme.typography.titleLarge)
             }
         }
@@ -126,14 +146,23 @@ fun PantallaUsuarios(
                             Text(usuario.nombre, style = MaterialTheme.typography.titleMedium)
                             Text(usuario.correo, style = MaterialTheme.typography.bodyMedium)
                             Text(
-                                text = "${rolDesdeBackend(usuario.rol).etiqueta} · ${if (usuario.activo) "Activo" else "Inactivo"}",
+                                text = rolDesdeBackend(usuario.rol)?.etiqueta ?: usuario.rol,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                             Row {
-                                TextButton(onClick = { usuarioAEditar = usuario }) { Text("Editar") }
-                                if (usuario.activo && usuario.correo != correoActual) {
-                                    TextButton(onClick = { usuarioAEliminar = usuario }) { Text("Eliminar") }
+                                TextButton(
+                                    enabled = !estado.cargando,
+                                    onClick = {
+                                        viewModel.limpiarError()
+                                        usuarioAEditar = usuario
+                                    }
+                                ) { Text("Editar") }
+                                if (usuario.id != idActual) {
+                                    TextButton(
+                                        enabled = !estado.cargando,
+                                        onClick = { usuarioAEliminar = usuario }
+                                    ) { Text("Eliminar") }
                                 }
                             }
                         }
@@ -147,18 +176,24 @@ fun PantallaUsuarios(
 @Composable
 private fun DialogoUsuario(
     usuario: UsuarioResponse?,
-    onGuardar: (String, String, String) -> Unit,
+    cargando: Boolean,
+    error: String?,
+    onGuardar: (String, String, String, Rol) -> Unit,
     onCancelar: () -> Unit
 ) {
     var nombre by remember { mutableStateOf(usuario?.nombre ?: "") }
     var correo by remember { mutableStateOf(usuario?.correo ?: "") }
     var password by remember { mutableStateOf("") }
+    var rol by remember { mutableStateOf(Rol.VENDEDOR) }
 
     AlertDialog(
-        onDismissRequest = onCancelar,
-        title = { Text(if (usuario == null) "Nuevo vendedor" else "Editar usuario") },
+        onDismissRequest = { if (!cargando) onCancelar() },
+        title = { Text(if (usuario == null) "Nuevo usuario" else "Editar usuario") },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Column(
+                modifier = Modifier.verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 CampoTexto(valor = nombre, alCambiarValor = { nombre = it }, etiqueta = "Nombre", icono = Icons.Filled.Person)
                 CampoTexto(valor = correo, alCambiarValor = { correo = it }, etiqueta = "Correo electrónico", icono = Icons.Filled.Email)
                 if (usuario == null) {
@@ -169,14 +204,34 @@ private fun DialogoUsuario(
                         icono = Icons.Filled.Lock,
                         transformacionVisual = PasswordVisualTransformation()
                     )
+                    Text("Perfil", style = MaterialTheme.typography.labelLarge)
+                    Rol.entries.forEach { opcion ->
+                        Row(
+                            modifier = Modifier.fillMaxWidth().selectable(
+                                selected = rol == opcion,
+                                enabled = !cargando,
+                                role = Role.RadioButton,
+                                onClick = { rol = opcion }
+                            ).padding(vertical = 6.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            RadioButton(selected = rol == opcion, onClick = null)
+                            Text(opcion.etiqueta)
+                        }
+                    }
                 }
+                error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
             }
         },
         confirmButton = {
-            TextButton(onClick = { onGuardar(nombre, correo, password) }) { Text("Guardar") }
+            TextButton(
+                enabled = !cargando,
+                onClick = { onGuardar(nombre, correo, password, rol) }
+            ) { Text(if (cargando) "Guardando…" else "Guardar") }
         },
         dismissButton = {
-            TextButton(onClick = onCancelar) { Text("Cancelar") }
+            TextButton(enabled = !cargando, onClick = onCancelar) { Text("Cancelar") }
         }
     )
 }

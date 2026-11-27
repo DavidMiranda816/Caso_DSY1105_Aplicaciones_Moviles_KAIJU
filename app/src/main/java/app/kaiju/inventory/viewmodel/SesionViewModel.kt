@@ -18,20 +18,25 @@ class SesionViewModel : ViewModel() {
     var token: String? = null
         private set
 
-    fun iniciarSesion(respuesta: LoginResponse) {
-        val usuario = respuesta.usuario ?: return
+    fun iniciarSesion(respuesta: LoginResponse): Boolean {
+        cerrarSesion()
+        val usuario = respuesta.usuario ?: return false
+        val rol = rolDesdeBackend(usuario.rol) ?: return false
+        if (!usuario.activo || respuesta.token.isBlank()) return false
+
         token = respuesta.token
         _usuarioActivo.value = Usuario(
+            id = usuario.id,
             correo = usuario.correo,
-            contrasena = "",
             nombre = usuario.nombre,
-            rol = rolDesdeBackend(usuario.rol)
+            rol = rol
         )
+        return true
     }
 
     fun cerrarSesion() {
-        _usuarioActivo.value = null
         token = null
+        _usuarioActivo.value = null
     }
 
     fun puedeGestionarProductos(usuario: Usuario?): Boolean =

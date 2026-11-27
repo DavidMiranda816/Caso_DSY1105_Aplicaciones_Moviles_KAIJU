@@ -24,9 +24,8 @@ class PantallaLoginEmulationTest {
             KaijuTheme {
                 PantallaLogin(
                     modeloVista = LoginViewModel(),
-                    alAutenticar = {},
+                    alAutenticar = { false },
                     alIngresarExitosamente = {},
-                    onIrARegistro = {},
                     onEasterEggEncontrado = {}
                 )
             }

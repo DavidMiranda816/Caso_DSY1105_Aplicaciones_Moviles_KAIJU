@@ -5,7 +5,7 @@ import android.net.Uri
 const val ARG_SKU = "sku"
 sealed class Rutas(val ruta: String) {
     object Login : Rutas("login")
-    object Registro : Rutas("registro")
+    object EasterEgg : Rutas("easteregg")
     object Inventario : Rutas("inventario")
     object Alertas : Rutas("alertas")
     object Escaner : Rutas("escaner")
