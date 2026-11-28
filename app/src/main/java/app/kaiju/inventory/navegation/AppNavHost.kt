@@ -1,0 +1,239 @@
+package app.kaiju.inventory.navegation
+
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material.icons.filled.SwapHoriz
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
+import app.kaiju.inventory.ui.screen.*
+import app.kaiju.inventory.viewmodel.KaijuViewModel
+import app.kaiju.inventory.viewmodel.KaijuViewModelFactory
+import app.kaiju.inventory.viewmodel.LoginViewModel
+import app.kaiju.inventory.viewmodel.MovimientoViewModel
+import app.kaiju.inventory.viewmodel.SesionViewModel
+import app.kaiju.inventory.viewmodel.UsuariosViewModel
+
+private data class ItemNav(
+    val ruta: String,
+    val destino: String,
+    val icono: ImageVector,
+    val etiqueta: String
+)
+
+@Composable
+fun AppNavHost() {
+    val contexto = LocalContext.current
+    val factory = remember { KaijuViewModelFactory(contexto) }
+    val viewModel: KaijuViewModel = viewModel(factory = factory)
+    val movimientoViewModel: MovimientoViewModel = viewModel(factory = factory)
+    val sesionViewModel: SesionViewModel = viewModel()
+
+    val navController = rememberNavController()
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val rutaActual = backStackEntry?.destination?.route
+
+    val usuarioActivo by sesionViewModel.usuarioActivo.collectAsState()
+    val puedeGestionar = sesionViewModel.puedeGestionarProductos(usuarioActivo)
+    val puedeVerAlertas = sesionViewModel.puedeVerAlertas(usuarioActivo)
+    val tiposPermitidos = sesionViewModel.tiposMovimientoPermitidos(usuarioActivo)
+
+    val items = buildList {
+        add(ItemNav(Rutas.Inventario.ruta, Rutas.Inventario.ruta, Icons.AutoMirrored.Filled.List, "Inventario"))
+        if (tiposPermitidos.isNotEmpty()) {
+            add(ItemNav(Rutas.Movimiento.ruta, Rutas.Movimiento.ruta, Icons.Filled.SwapHoriz, "Movimiento"))
+            add(ItemNav(Rutas.Escaner.ruta, Rutas.Escaner.ruta, Icons.Filled.QrCodeScanner, "Escanear"))
+        }
+        if (puedeVerAlertas) {
+            add(ItemNav(Rutas.Alertas.ruta, Rutas.Alertas.ruta, Icons.Filled.Warning, "Alertas"))
+        }
+        if (puedeGestionar) {
+            add(ItemNav(Rutas.Usuarios.ruta, Rutas.Usuarios.ruta, Icons.Filled.Person, "Usuarios"))
+        }
+    }
+    val mostrarBottomBar = usuarioActivo != null && items.any { it.ruta == rutaActual }
+
+    LaunchedEffect(usuarioActivo, rutaActual) {
+        if (usuarioActivo == null && rutaActual != null &&
+            rutaActual != Rutas.Login.ruta && rutaActual != Rutas.EasterEgg.ruta
+        ) {
+            navController.navigate(Rutas.Login.ruta) {
+                popUpTo(navController.graph.id) { inclusive = true }
+            }
+        }
+    }
+
+    Scaffold(
+        bottomBar = {
+            if (mostrarBottomBar) {
+                NavigationBar {
+                    items.forEach { item ->
+                        NavigationBarItem(
+                            selected = rutaActual == item.ruta,
+                            onClick = {
+                                if (rutaActual != item.ruta) {
+                                    navController.navigate(item.destino) { launchSingleTop = true }
+                                }
+                            },
+                            icon = { Icon(item.icono, contentDescription = item.etiqueta) },
+                            label = { Text(item.etiqueta) }
+                        )
+                    }
+                }
+            }
+        }
+    ) { innerPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = Rutas.Login.ruta,
+            modifier = Modifier.padding(innerPadding)
+        ) {
+            composable(Rutas.Login.ruta) {
+                val loginViewModel: LoginViewModel = viewModel()
+                PantallaLogin(
+                    modeloVista = loginViewModel,
+                    alAutenticar = { respuesta -> sesionViewModel.iniciarSesion(respuesta) },
+                    alIngresarExitosamente = {
+                        navController.navigate(Rutas.Inventario.ruta) {
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
+                        }
+                    },
+                    onEasterEggEncontrado = {
+                        navController.navigate(Rutas.EasterEgg.ruta)
+                    }
+                )
+            }
+
+            composable(Rutas.Inventario.ruta) {
+                val cuenta = usuarioActivo ?: return@composable
+                PantallaCatalogo(
+                    viewModel = viewModel,
+                    usuario = cuenta,
+                    puedeGestionar = puedeGestionar,
+                    onIrAAgregar = { navController.navigate(Rutas.Agregar.conSku()) },
+                    onIrAEditar = { sku -> navController.navigate(Rutas.Agregar.conSku(sku)) },
+                    onIrADetalle = { sku -> navController.navigate(Rutas.DetalleProducto.conSku(sku)) },
+                    onCerrarSesion = {
+                        sesionViewModel.cerrarSesion()
+                        movimientoViewModel.reiniciar()
+                        viewModel.limpiarFormulario()
+                        navController.navigate(Rutas.Login.ruta) {
+                            popUpTo(navController.graph.id) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(
+                route = Rutas.DetalleProducto.ruta,
+                arguments = listOf(navArgument(ARG_SKU) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) { entry ->
+                if (usuarioActivo == null) return@composable
+                val sku = entry.arguments?.getString(ARG_SKU) ?: ""
+                PantallaDetalleProducto(
+                    sku = sku,
+                    viewModel = viewModel,
+                    puedeEditar = puedeGestionar,
+                    puedeRegistrarMovimiento = tiposPermitidos.isNotEmpty(),
+                    onVolver = { navController.popBackStack() },
+                    onIrAEditar = { s -> navController.navigate(Rutas.Agregar.conSku(s)) },
+                    onIrAMovimiento = { s ->
+                        movimientoViewModel.seleccionarProducto(s)
+                        navController.navigate(Rutas.Movimiento.ruta)
+                    }
+                )
+            }
+
+            composable(
+                route = Rutas.Agregar.ruta,
+                arguments = listOf(navArgument(ARG_SKU) {
+                    type = NavType.StringType
+                    nullable = true
+                    defaultValue = null
+                })
+            ) { entry ->
+                if (!puedeGestionar) return@composable
+                PantallaFormularioProducto(
+                    viewModel = viewModel,
+                    skuEditar = entry.arguments?.getString(ARG_SKU),
+                    onTerminado = {
+                        navController.navigate(Rutas.Inventario.ruta) {
+                            popUpTo(Rutas.Inventario.ruta) { inclusive = true }
+                        }
+                    }
+                )
+            }
+
+            composable(Rutas.Alertas.ruta) {
+                if (!puedeVerAlertas) return@composable
+                PantallaAlertas(
+                    viewModel = viewModel,
+                    onIrADetalle = { sku -> navController.navigate(Rutas.DetalleProducto.conSku(sku)) }
+                )
+            }
+
+            composable(Rutas.Usuarios.ruta) {
+                val cuenta = usuarioActivo
+                val token = sesionViewModel.token
+                if (puedeGestionar && cuenta != null && token != null) {
+                    PantallaUsuarios(viewModel = viewModel(), token = token, idActual = cuenta.id)
+                }
+            }
+
+            composable(Rutas.Escaner.ruta) {
+                if (tiposPermitidos.isEmpty()) return@composable
+                PantallaEscaner(
+                    onCodigoLeido = { codigo ->
+                        movimientoViewModel.codigoLeido(codigo)
+                        navController.navigate(Rutas.Movimiento.ruta) {
+                            popUpTo(Rutas.Escaner.ruta) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    },
+                    onIngresarManual = {
+                        movimientoViewModel.activarIngresoManualDeCodigo()
+                        navController.navigate(Rutas.Movimiento.ruta) {
+                            popUpTo(Rutas.Escaner.ruta) { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                )
+            }
+
+            composable(Rutas.Movimiento.ruta) {
+                val cuenta = usuarioActivo ?: return@composable
+                PantallaMovimiento(
+                    viewModel = movimientoViewModel,
+                    usuarioActivo = cuenta.correo,
+                    tiposPermitidos = tiposPermitidos,
+                    onEscanear = { navController.navigate(Rutas.Escaner.ruta) },
+                    onVolver = {
+                        movimientoViewModel.reiniciar()
+                        navController.popBackStack()
+                    }
+                )
+            }
+
+            composable(Rutas.EasterEgg.ruta) {
+                PantallaEasterEgg(onVolver = { navController.popBackStack() })
+            }
+        }
+    }
+}

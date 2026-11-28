@@ -1,0 +1,23 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Llaves y credenciales de firma
+*.jks
+*.keystore
+keystore.properties
+
+# Excepción: la llave de práctica del curso sí va al repositorio
+!**/llaves/mi_llave.jks
