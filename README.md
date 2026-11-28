@@ -90,3 +90,6 @@ Paleta propia en `ui/theme` (morado como color principal, amarillo y naranjo par
 ## Diseño y planificación
 - Diseño (sketch, wireframe y mockup): [Carpeta de Drive del equipo](https://drive.google.com/drive/folders/1XL4gLUkanAdTLWINhARqaPNu_OugBA-n?usp=sharing)
 - Planificación: [Tablero de Trello](https://trello.com/b/HXUx1zm2/tablero-trello)
+
+## APK Firmado y Llave JKS (Keystore)
+- [Carpeta de Google Drive (Apk + Firma)](https://drive.google.com/drive/folders/1KN811Uie2XbZhlpw1NTTlwqb1BznPO7): Contiene el archivo `app-release.apk` compilado y firmado, junto con la llave de firmas `.jks` (`mi_llave`).
